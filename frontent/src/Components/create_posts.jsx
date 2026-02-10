@@ -6,7 +6,7 @@ import { UserContext } from "../Context/context";
 import { useNavigate } from "react-router-dom";
 
 function CreatePosts() {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const { setAllPostsAgain } = useContext(UserContext);
   const validationSchema = Yup.object({
     title: Yup.string()
@@ -45,7 +45,7 @@ function CreatePosts() {
       if (success) {
         resetForm();
         setAllPostsAgain((prev) => !prev);
-        navigate("/home")
+        navigate("/home");
       }
     } catch (err) {
       console.error("Runtime error:", err);
@@ -171,7 +171,13 @@ outline-none"
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-[#fbba00] text-white py-2 rounded-lg font-medium transition-colors cursor-pointer"
+              className={`w-full py-2 rounded-lg font-medium transition-colors cursor-pointer
+    ${
+      isSubmitting
+        ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+        : "bg-[#fbba00] text-white hover:bg-[#e6a700]"
+    }
+  `}
             >
               {isSubmitting ? "Posting..." : "Post"}
             </button>

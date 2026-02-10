@@ -35,6 +35,8 @@ function Home() {
   // states
   const [AllPosts, setAllPosts] = useState([]);
 
+  console.log(AllPosts);
+
   //
   const [menuOpen, setMenuOpen] = useState(null);
   //
@@ -50,6 +52,8 @@ function Home() {
   const [followStatus, setFollowStatus] = useState({});
   const [getfollowStatus, setfollowStatus] = useState({});
   const { UserInfo, resfollowstatus } = useContext(UserContext);
+
+  console.log(UserInfo);
 
   //
   const navigate = useNavigate();
@@ -67,8 +71,8 @@ function Home() {
     socket.on("likeUpdated", (data) => {
       setAllPosts((prev) =>
         prev.map((p) =>
-          p._id === data.postId ? { ...p, likeCount: data.likeCount } : p
-        )
+          p._id === data.postId ? { ...p, likeCount: data.likeCount } : p,
+        ),
       );
     });
 
@@ -112,7 +116,7 @@ function Home() {
           ...prev,
           [loginUserId]: { status: follow_Status },
         }));
-      }
+      },
     );
     return () => socket.off("followStatusUpdated");
   }, []);
@@ -122,6 +126,7 @@ function Home() {
   const fetchData = async () => {
     const { success, response, status } = await all_data();
     if (status === 401) {
+      localStorage.removeItem("token");
       navigate("/login");
       return;
     }
@@ -136,6 +141,7 @@ function Home() {
     const { success, status } = await delete_post_data(data);
 
     if (status === 401) {
+      localStorage.removeItem("token");
       navigate("/login");
       return;
     }
@@ -155,7 +161,7 @@ function Home() {
       const colordata = resdata?.isLiked;
 
       setAllPosts((prev) =>
-        prev.map((p) => (p._id === data ? { ...p, isLiked: colordata } : p))
+        prev.map((p) => (p._id === data ? { ...p, isLiked: colordata } : p)),
       );
     } catch (err) {
       console.error("Like error:", err);
@@ -168,6 +174,7 @@ function Home() {
     try {
       const { success, response, status } = await All_CommentGets(PostId);
       if (status === 401) {
+        localStorage.removeItem("token");
         navigate("/login");
         return;
       }
@@ -191,6 +198,7 @@ function Home() {
       const { success, response, status } = await user_comment_post(payload);
 
       if (status === 401) {
+        localStorage.removeItem("token");
         navigate("/login");
         return;
       }
@@ -206,10 +214,10 @@ function Home() {
 
   const handleGetCommentReplys = async (commentId) => {
     try {
-      const { success, response, status } = await All_Comment_Reply_Gets(
-        commentId
-      );
+      const { success, response, status } =
+        await All_Comment_Reply_Gets(commentId);
       if (status === 401) {
+        localStorage.removeItem("token");
         navigate("/login");
         return;
       }
@@ -233,10 +241,10 @@ function Home() {
   const handleCommentReplyInput = async (data, { resetForm }, commentId) => {
     try {
       const payLoad = { ...data, commentId };
-      const { success, response, status } = await user_comment_reply_post(
-        payLoad
-      );
+      const { success, response, status } =
+        await user_comment_reply_post(payLoad);
       if (status === 401) {
+        localStorage.removeItem("token");
         navigate("/login");
         return;
       }
@@ -256,7 +264,11 @@ function Home() {
   //  Handle follow
 
   const handleFollow = async (targetUserId) => {
+    console.log(targetUserId);
+
     const { success, response } = await user_follow_click(targetUserId);
+
+    console.log(response.data.follow.status);
 
     if (success) {
       setFollowStatus((prev) => ({
@@ -540,14 +552,14 @@ function Home() {
                             initialValues={{ reply: "" }}
                             validationSchema={Yup.object({
                               reply: Yup.string().required(
-                                "Reply cannot be empty"
+                                "Reply cannot be empty",
                               ),
                             })}
                             onSubmit={(values, action) =>
                               handleCommentReplyInput(
                                 values,
                                 action,
-                                comment._id
+                                comment._id,
                               )
                             }
                           >

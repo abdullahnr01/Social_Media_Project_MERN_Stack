@@ -13,7 +13,7 @@ const {
   followUserController,
   getNotificationController,
   respondFollowController,
-  getFollowStatusController
+  getFollowStatusController,
 } = require("../Controller/user_post_controller");
 
 const {
@@ -24,6 +24,7 @@ const {
   UpdateUserInfoController,
   UserProfileUpdateController,
   GetMyPostController,
+  googleAuthController,
 } = require("../Controller/user_profile_controller");
 
 // Multer Middlewares
@@ -40,7 +41,7 @@ const {
 
 // Routers   ----------------------------
 
-// Get -------------------
+// Get ---------------------------------------
 router.get("/getpostdata", auth_middleware, UserGetDataController);
 
 router.get("/getuserinfo_data", auth_middleware, getUserInfoDataController);
@@ -52,15 +53,13 @@ router.get("/getAllcomments", auth_middleware, getAllCommentsController);
 router.get(
   "/getAllCommentreplies",
   auth_middleware,
-  getAllCommentReplyController
+  getAllCommentReplyController,
 );
-
-router.get("/getAllNotification", auth_middleware, getNotificationController);
 
 router.get("/getAllMyPosts", auth_middleware, GetMyPostController);
 
-router.get("/getAllFollowStatus" , auth_middleware ,getFollowStatusController )
-
+router.get("/getAllNotification", auth_middleware, getNotificationController);
+router.get("/getAllFollowStatus", auth_middleware, getFollowStatusController);
 
 // Post ---------------------
 
@@ -68,7 +67,7 @@ router.post(
   "/postdata",
   auth_middleware,
   PostMulter.single("image"),
-  UserPostController
+  UserPostController,
 );
 
 router.post("/signup", user_signUp_middleware, UserSignUpController);
@@ -81,8 +80,10 @@ router.post("/comment", auth_middleware, UserPostCommentController);
 router.post(
   "/comment_reply_post",
   auth_middleware,
-  UserPostCommentReplyController
+  UserPostCommentReplyController,
 );
+
+router.post("/auth/google", auth_middleware, googleAuthController);
 
 // delete -----------------------------
 
@@ -94,7 +95,7 @@ router.patch(
   "/uploadprofile",
   auth_middleware,
   ProfileImageMulter.single("image"),
-  UserProfileUpdateController
+  UserProfileUpdateController,
 );
 
 router.patch("/UpdateUserinfo_data", auth_middleware, UpdateUserInfoController);

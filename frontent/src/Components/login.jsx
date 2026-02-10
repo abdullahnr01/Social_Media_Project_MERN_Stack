@@ -4,11 +4,13 @@ import * as Yup from "yup";
 import { toast } from "react-toastify";
 import { useNavigate, Link } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 
 // local
 import { UserContext } from "../Context/context";
-import { user_login_in } from "../API layer/api";
+import { user_login_in, GoogleCredential_Login_API } from "../API layer/api";
+
+// 473953610284-4e4ksvrtu7iurv7rqv7qu0oq3g9fted8.apps.googleusercontent.com
 
 function Login() {
   // Global States
@@ -21,6 +23,31 @@ function Login() {
   // Other
   const navigate = useNavigate();
 
+  useEffect(() => {
+    google.accounts.id.initialize({
+      client_id:
+        "473953610284-4e4ksvrtu7iurv7rqv7qu0oq3g9fted8.apps.googleusercontent.com",
+      callback: handle_GoogleCredential_Login,
+    });
+
+    google.accounts.id.renderButton(document.getElementById("googleBtn"), {
+      theme: "outline",
+      size: "large",
+      text: "continue_with",
+    });
+  }, []);
+
+  const handle_GoogleCredential_Login = async (data) => {
+    console.log("Response Token", data);
+
+    const { success, response, status } =
+      await GoogleCredential_Login_API(data);
+
+    if (success) {
+      setTimeout(() => navigate("/home"), 500);
+    }
+  };
+
   const validationSchema = Yup.object({
     email: Yup.string()
       .trim()
@@ -30,7 +57,7 @@ function Login() {
         (value) => {
           if (!value) return true;
           return value === value.trim();
-        }
+        },
       )
       .required("Email must be required")
       .email("Invalid email address")
@@ -159,6 +186,18 @@ function Login() {
                 >
                   {isSubmitting ? "Login..." : "Login"}
                 </button>
+
+                {/* Divider */}
+                <div className="flex items-center my-4">
+                  <div className="flex-grow h-px bg-gray-300"></div>
+                  <span className="px-3 text-sm text-gray-500">OR</span>
+                  <div className="flex-grow h-px bg-gray-300"></div>
+                </div>
+
+                {/* Google Button */}
+                <div className="w-full flex justify-center">
+                  <div id="googleBtn" className="w-full max-w-[330px]"></div>
+                </div>
 
                 {/* Footer */}
                 <p className="text-black text-sm mt-4 text-center">

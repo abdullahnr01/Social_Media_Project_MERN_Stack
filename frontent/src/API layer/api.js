@@ -1,11 +1,20 @@
 import axios from "axios";
 import { toast } from "react-toastify";
 
+let API_Url = "http://localhost:9090";
+
+import { useNavigate } from "react-router-dom";
+
 // Get APIs-------------------------------
 
 export const all_data = async () => {
   try {
     const Usertoken = localStorage.getItem("token");
+    if (!Usertoken) {
+      toast.error("You are not logged in.");
+      navigate("/login");
+      return { success: false, status: 401, response: null };
+    }
     const response = await axios.get(
       "http://localhost:9090/user/getpostdata",
 
@@ -13,7 +22,7 @@ export const all_data = async () => {
         headers: {
           Authorization: `Bearer ${Usertoken}`,
         },
-      }
+      },
     );
     toast.success(response.data?.message);
     return { success: true, response: response, status: response.status };
@@ -41,7 +50,7 @@ export const get_All_My_Posts = async () => {
         headers: {
           Authorization: `Bearer ${Usertoken}`,
         },
-      }
+      },
     );
 
     // toast.success(response.data?.message);
@@ -70,7 +79,7 @@ export const get_user_login_info = async () => {
         headers: {
           Authorization: `Bearer ${Usertoken}`,
         },
-      }
+      },
     );
 
     toast.success(response.data?.message);
@@ -99,7 +108,7 @@ export const get_user_profile_img = async () => {
         headers: {
           Authorization: `Bearer ${Usertoken}`,
         },
-      }
+      },
     );
 
     // toast.success(response.data?.message);
@@ -130,7 +139,7 @@ export const All_CommentGets = async (postId) => {
           Authorization: `Bearer ${Usertoken}`,
           "Post-Id": postId,
         },
-      }
+      },
     );
     toast.success(response.data?.message);
     return { success: true, response: response, status: response.status };
@@ -160,7 +169,7 @@ export const All_Comment_Reply_Gets = async (commentId) => {
           Authorization: `Bearer ${Usertoken}`,
           "Comment-Id": commentId,
         },
-      }
+      },
     );
     toast.success(response.data?.message);
     return { success: true, response: response, status: response.status };
@@ -188,7 +197,7 @@ export const get_user_notification = async () => {
         headers: {
           Authorization: `Bearer ${Usertoken}`,
         },
-      }
+      },
     );
 
     // toast.success(response.data?.message);
@@ -208,9 +217,8 @@ export const get_user_notification = async () => {
   }
 };
 
-
 export const getAllFollowStatus = async () => {
-   try {
+  try {
     const Usertoken = localStorage.getItem("token");
     const response = await axios.get(
       "http://localhost:9090/user/getAllFollowStatus",
@@ -218,7 +226,7 @@ export const getAllFollowStatus = async () => {
         headers: {
           Authorization: `Bearer ${Usertoken}`,
         },
-      }
+      },
     );
 
     // toast.success(response.data?.message);
@@ -236,8 +244,47 @@ export const getAllFollowStatus = async () => {
 
     toast.error("Network error: Please check your internet connection.");
   }
-}
+};
 // Post APIs-------------------------------
+
+export const GoogleCredential_Login_API = async (datatoken) => {
+  try {
+    const googleToken = datatoken.credential;
+
+    const response = await axios.post(`${API_Url}/auth/google`, {
+      token: googleToken,
+    });
+
+    console.log("Backend Response:", response.data);
+    console.log("Backend Response:", response);
+
+    const navigate = useNavigate();
+
+    if (response.status === 401) {
+      localStorage.removeItem("token");
+      navigate("/login");
+      return;
+    }
+    if (response.data?.token) {
+      localStorage.setItem("token", response.data.token);
+    }
+
+    toast.success(response.data?.message);
+    return { success: true, response: response, status: response.status };
+  } catch (err) {
+    console.error(`Google Login Auth Error ${err}`);
+    if (err.response) {
+      toast.error(err.response.data?.message);
+      return {
+        success: false,
+        status: err.response.status,
+        response: err.response,
+      };
+    }
+
+    toast.error("Network error: Please check your internet connection.");
+  }
+};
 
 export const user_post_data = async (data) => {
   try {
@@ -250,7 +297,7 @@ export const user_post_data = async (data) => {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${Usertoken}`,
         },
-      }
+      },
     );
     toast.success(response.data?.message);
     return { success: true, response: response, status: response.status };
@@ -273,7 +320,7 @@ export const user_sign_up = async (data) => {
   try {
     const response = await axios.post(
       "http://localhost:9090/user/signup",
-      data
+      data,
     );
 
     toast.success(response.data?.message);
@@ -328,7 +375,7 @@ export const user_comment_post = async (data) => {
         headers: {
           Authorization: `Bearer ${Usertoken}`,
         },
-      }
+      },
     );
 
     toast.success(response.data?.message);
@@ -358,7 +405,7 @@ export const user_comment_reply_post = async (data) => {
         headers: {
           Authorization: `Bearer ${Usertoken}`,
         },
-      }
+      },
     );
 
     toast.success(response.data?.message);
@@ -389,8 +436,10 @@ export const user_follow_click = async (targetUserId) => {
         headers: {
           Authorization: `Bearer ${Usertoken}`,
         },
-      }
+      },
     );
+
+    console.log("heavy");
 
     toast.success(response.data?.message);
     return { success: true, response: response, status: response.status };
@@ -420,7 +469,7 @@ export const respond_user_follow_click = async (targetUserId, action) => {
         headers: {
           Authorization: `Bearer ${Usertoken}`,
         },
-      }
+      },
     );
 
     toast.success(response.data?.message);
@@ -451,7 +500,7 @@ export const delete_post_data = async (data) => {
       {
         params: { userId: data },
         headers: { Authorization: `Bearer ${Usertoken}` },
-      }
+      },
     );
     toast.success(response.data?.message);
     return { success: true, response: response };
@@ -482,7 +531,7 @@ export const user_update_all_info = async (data) => {
         headers: {
           Authorization: `Bearer ${Usertoken}`,
         },
-      }
+      },
     );
     toast.success(response.data?.message);
     return { success: true, response: response, status: response.status };
@@ -542,7 +591,7 @@ export const user_profile_upload = async (data) => {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${Usertoken}`,
         },
-      }
+      },
     );
     // toast.success(response.data?.message);
     return { success: true, response: response, status: response.status };
@@ -572,7 +621,7 @@ export const user_post_likes = async (data) => {
           postId: data,
         },
         headers: { Authorization: `Bearer ${Usertoken}` },
-      }
+      },
     );
 
     return { success: true, response: response };

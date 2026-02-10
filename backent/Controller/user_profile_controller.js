@@ -1,21 +1,23 @@
 // User Info Model
 const UserSignUp = require("../Model/user_signup_model");
 const User = require("../Model/user_model");
-
+const { OAuth2Client } = require("google-auth-library");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
-const UserloginSecretKey = process.env.LOGIN_SECRET_KEY;
-
-const cloudinary = require("../Cloudinary/CloudinaryConfig");
 const fs = require("fs");
+const cloudinary = require("../Cloudinary/CloudinaryConfig");
+
+//
+const UserloginSecretKey = process.env.LOGIN_SECRET_KEY;
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const GetMyPostController = async (req, res) => {
   try {
     const User_Id = req.UserId;
 
-    const MyPosts = await User.find({ user_id: User_Id })
-     
+    const MyPosts = await User.find({ user_id: User_Id });
+
     return res.status(200).json({
       success: true,
       message: "My posts fetched successfully",
@@ -116,7 +118,7 @@ const UpdateUserInfoController = async (req, res) => {
     const UpdateUserProfile = await UserSignUp.findByIdAndUpdate(
       User_Id,
       { $set: UpdateField },
-      { new: true }
+      { new: true },
     );
     return res
       .status(200)
@@ -163,6 +165,68 @@ const UserProfileUpdateController = async (req, res) => {
   }
 };
 
+const googleAuthController = async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: "Google token is required",
+      });
+    }
+
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience:
+        "473953610284-4e4ksvrtu7iurv7rqv7qu0oq3g9fted8.apps.googleusercontent.com",
+    });
+
+    const payload = ticket.getPayload();
+    const { email, given_name, family_name, picture, sub } = payload;
+
+    let user = await UserSignUp.findOne({ email });
+
+    if (!user) {
+      user = await UserSignUp.create({
+        firstname: given_name,
+        lastname: family_name,
+        email,
+        googleId: sub,
+        authProvider: "google",
+        image: picture,
+        password: null, 
+      });
+    }
+
+    const jwtToken = jwt.sign(
+      { id: user._id },
+      "UserloginSecretKey", // apni secret key
+      { expiresIn: "7d" },
+    );
+
+    return res.status(200).json({
+      success: true,
+      token: jwtToken,
+      message: "User Login Successful!",
+      user: {
+        id: user._id,
+        firstname: user.firstname,
+        lastname: user.lastname,
+        email: user.email,
+        image: user.image,
+        authProvider: user.authProvider,
+      },
+    });
+  } catch (error) {
+    console.error("Google Auth Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 module.exports = {
   getUserInfoDataController,
   getUserPrflImgController,
@@ -171,4 +235,5 @@ module.exports = {
   UpdateUserInfoController,
   UserProfileUpdateController,
   GetMyPostController,
+  googleAuthController,
 };
