@@ -1,13 +1,13 @@
 // User Info Model
 const UserSignUp = require("../Model/user_signup_model");
-const User = require("../Model/user_model");
+const User = require("../Model/user_post_model");
 const { OAuth2Client } = require("google-auth-library");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
 const fs = require("fs");
 const cloudinary = require("../Cloudinary/CloudinaryConfig");
-
+const streamifier = require("streamifier");
 //
 const UserloginSecretKey = process.env.LOGIN_SECRET_KEY;
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -37,22 +37,31 @@ const getUserInfoDataController = async (req, res) => {
     const user = await UserSignUp.findById(req.UserId).select("-password -__v");
 
     if (!user) {
-      return res.status(404).json({ message: "Invalid User" });
+      return res.status(404).json({ success: false, message: "Invalid User" });
     }
-    return res.status(200).json(user);
+    return res.status(200).json({ success: true, data: user });
   } catch (err) {
     console.error(`Get User Info data Error: ${err}`);
-    return res.status(500).json({ message: "Internal Server error." });
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal Server error." });
   }
 };
 
 const getUserPrflImgController = async (req, res) => {
   try {
     const user = await UserSignUp.findById(req.UserId).select("image");
-    return res.status(200).json(user); // image path bhi milega
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "Invalid User" });
+    }
+
+    return res.status(200).json({ success: true, image: user.image }); // image path bhi milega
   } catch (err) {
     console.error(`Get user profile image error`, err);
-    return res.status(500).json({ message: "Internal Server error." });
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal Server error." });
   }
 };
 
@@ -100,12 +109,14 @@ const UserSignUpController = async (req, res) => {
 
 const UpdateUserInfoController = async (req, res) => {
   try {
-    const { firstname, lastname, date_of_birth, gender } = req.body;
+    const { firstname, lastname, date_of_birth, gender, image } = req.body;
     const User_Id = req.UserId;
 
     const ExistingUser = await UserSignUp.findById(User_Id);
     if (!ExistingUser) {
-      return res.status(404).json({ message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
     const UpdateField = {};
@@ -115,17 +126,43 @@ const UpdateUserInfoController = async (req, res) => {
     if (date_of_birth) UpdateField.date_of_birth = date_of_birth;
     if (gender) UpdateField.gender = gender;
 
+    if (req.file) {
+      const result = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            folder: "S-M_UserProfileImages",
+            public_id: `${Date.now()}-${req.file.originalname}`,
+            resource_type: "image",
+          },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          },
+        );
+
+        streamifier.createReadStream(req.file.buffer).pipe(stream);
+      });
+
+      UpdateField.image = result.secure_url;
+    } else if (image === "delete") {
+      UpdateField.image = null;
+    }
+
     const UpdateUserProfile = await UserSignUp.findByIdAndUpdate(
       User_Id,
       { $set: UpdateField },
       { new: true },
     );
-    return res
-      .status(200)
-      .json({ message: "User Profile Update successfully!" });
+    return res.status(200).json({
+      success: true,
+      message: "User Profile updated successfully!",
+      user_updateInfo: UpdateUserProfile,
+    });
   } catch (err) {
-    console.error(`Data Updating error ${err}`);
-    return res.status(500).json({ message: "Internal Server error." });
+    console.error("Data Updating error:", err);
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal Server error." });
   }
 };
 
@@ -195,28 +232,18 @@ const googleAuthController = async (req, res) => {
         googleId: sub,
         authProvider: "google",
         image: picture,
-        password: null, 
+        password: null,
       });
     }
 
-    const jwtToken = jwt.sign(
-      { id: user._id },
-      "UserloginSecretKey", // apni secret key
-      { expiresIn: "7d" },
-    );
+    const jwtToken = jwt.sign({ id: user._id }, UserloginSecretKey, {
+      expiresIn: "7d",
+    });
 
     return res.status(200).json({
       success: true,
       token: jwtToken,
       message: "User Login Successful!",
-      user: {
-        id: user._id,
-        firstname: user.firstname,
-        lastname: user.lastname,
-        email: user.email,
-        image: user.image,
-        authProvider: user.authProvider,
-      },
     });
   } catch (error) {
     console.error("Google Auth Error:", error);

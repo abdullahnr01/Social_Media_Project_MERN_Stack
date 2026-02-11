@@ -1,7 +1,7 @@
 // User Info Model
 const UserSignUp = require("../Model/user_signup_model");
 // User Post Model
-const User = require("../Model/user_model");
+const User = require("../Model/user_post_model");
 // User Comment Model
 const UserComment = require("../Model/user_comment_model");
 // User Comment Reply Model

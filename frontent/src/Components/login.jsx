@@ -14,7 +14,7 @@ import { user_login_in, GoogleCredential_Login_API } from "../API layer/api";
 
 function Login() {
   // Global States
-  const { credentials, setCredentials, fetchProfileImage, UserInfofetch } =
+  const { credentials, setCredentials, UserInfofetch } =
     useContext(UserContext);
 
   // Local States
@@ -80,8 +80,7 @@ function Login() {
         resetForm();
         setCredentials({ email: "", password: "" });
         setTimeout(() => navigate("/home"), 500);
-        // fetchProfileImage();
-        // UserInfofetch();
+      
       }
     } catch (err) {
       console.error("Runtime error:", err);

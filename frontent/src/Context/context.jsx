@@ -4,6 +4,8 @@ import { get_user_profile_img, get_user_login_info } from "../API layer/api";
 export const UserContext = createContext();
 
 export const UserContextProvider = ({ children }) => {
+  // UseStates ------------------------------------------
+
   const [credentials, setCredentials] = useState({
     email: "",
     password: "",
@@ -11,26 +13,23 @@ export const UserContextProvider = ({ children }) => {
 
   const [AllPosts, setAllPosts] = useState([]);
   const [AllPostsAgain, setAllPostsAgain] = useState(false);
+  //
   const [UserInfo, setUserInfo] = useState({});
-  const [UserInfoAgain, setUserInfoAgain] = useState({});
-  const [profileImage, setProfileImage] = useState(null);
- 
-  const fetchProfileImage = async () => {
-    const { success, response } = await get_user_profile_img();
-    if (success) {
-      setProfileImage(response?.data?.image);
-    } else {
-      setProfileImage(null);
-    }
-  };
+
+  //
+
+  // Functions -----------------------------------------
 
   const UserInfofetch = async () => {
     const { response, success, status } = await get_user_login_info();
 
+    console.log(response?.data.data);
     if (success) {
-      setUserInfo(response?.data);
+      setUserInfo(response?.data?.data);
     }
   };
+
+  //  JSX ------------------------------------------
 
   return (
     <UserContext.Provider
@@ -43,11 +42,6 @@ export const UserContextProvider = ({ children }) => {
         AllPostsAgain,
         UserInfo,
         setUserInfo,
-        UserInfoAgain,
-        setUserInfoAgain,
-        profileImage,
-        setProfileImage,
-        fetchProfileImage,
         UserInfofetch,
       }}
     >

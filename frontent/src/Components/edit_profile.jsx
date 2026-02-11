@@ -3,7 +3,7 @@ import React, { useContext, useState, useEffect } from "react";
 import { Formik, Field, ErrorMessage } from "formik";
 import { useNavigate } from "react-router-dom";
 import * as Yup from "yup";
-import { FaUserCircle } from "react-icons/fa";
+import { FaUserCircle, FaTrashAlt } from "react-icons/fa";
 import { UserContext } from "../Context/context";
 
 import {
@@ -14,34 +14,33 @@ import {
 
 function EditProfile() {
   // States
-  const [updateprofileimg, setupdateprofileimg] = useState(null);
+  const {
+    UserInfo,
+    setUserInfo,
+    //function
+    UserInfofetch,
+  } = useContext(UserContext);
 
-  const { UserInfo, UserInfofetch, setProfileImage } = useContext(UserContext);
-  const navigate = useNavigate();
+  const [previewImage, setpreviewImage] = useState(null);
+
   useEffect(() => {
-    fetchProfile_Image();
-  }, []);
-
-  const fetchProfile_Image = async () => {
-    const { success, response } = await get_user_profile_img();
-    if (success) {
-      setupdateprofileimg(response?.data?.image);
+    if (UserInfo?.image) {
+      setpreviewImage(UserInfo.image);
     }
-  };
+  }, [UserInfo]);
 
-  const UserUploadImage = async (imagefile) => {
-    if (!imagefile) {
-      return;
-    }
+  const navigate = useNavigate();
 
-    const formData = new FormData();
-    formData.append("image", imagefile);
+  const IntailValues = {
+    firstname: UserInfo?.firstname || "",
+    lastname: UserInfo?.lastname || "",
+    email: UserInfo?.email || "",
 
-    const { success, response, status } = await user_profile_upload(formData);
-
-    if (success) {
-      setupdateprofileimg(`${response.data.image}`);
-    }
+    date_of_birth: UserInfo?.date_of_birth
+      ? new Date(UserInfo.date_of_birth).toISOString().split("T")[0]
+      : "",
+    gender: UserInfo?.gender || "",
+    image: UserInfo?.image || null,
   };
 
   const validationSchema = Yup.object({
@@ -64,7 +63,7 @@ function EditProfile() {
         (value) => {
           if (!value) return true;
           return value === value.trim();
-        }
+        },
       )
       .required("Email must be required")
       .email("Invalid email address")
@@ -76,20 +75,63 @@ function EditProfile() {
     gender: Yup.string()
       .oneOf(["male", "female", "other"])
       .required("Select gender"),
+    image: Yup.mixed()
+      .nullable() // allow null
+      .test(
+        "fileType",
+        "Only image files are allowed (jpeg, png, jpg, gif)",
+        (value) => {
+          if (!value) return true;
+
+          if (typeof value === "string") return true;
+          const allowedTypes = [
+            "image/jpeg",
+            "image/png",
+            "image/jpg",
+            "image/gif",
+          ];
+          return allowedTypes.includes(value.type);
+        },
+      )
+      .test("fileSize", "Image must be less than 2MB", (value) => {
+        if (!value) return true;
+        if (typeof value === "string") return true;
+        return value.size <= 2 * 1024 * 1024;
+      }),
   });
 
   const handleUpdateSubmit = async (values, { resetForm, setSubmitting }) => {
-    const { success, response, status } = await user_update_all_info(values);
-    if (status === 401) {
-      navigate("/login");
-      return;
-    }
+    try {
+      console.log(values);
 
-    if (success) {
-      UserInfofetch();
-      setProfileImage(updateprofileimg);
+      const formData = new FormData();
+
+      formData.append("firstname", values.firstname);
+      formData.append("lastname", values.lastname);
+      formData.append("email", values.email);
+      formData.append("date_of_birth", values.date_of_birth);
+      formData.append("gender", values.gender);
+
+      if (values.image instanceof File) {
+        formData.append("image", values.image);
+      } else if (values.image === null) {
+        formData.append("image", "delete");
+      }
+      const { success, response, status } =
+        await user_update_all_info(formData);
+      if (status === 401) {
+        navigate("/login");
+        return;
+      }
+
+      if (success) {
+        console.log(response?.data.user_updateInfo);
+        setUserInfo(response?.data.user_updateInfo);
+      }
+    } catch (error) {
+      console.error("Profile update error:", error);
+    } finally {
       setSubmitting(false);
-      navigate("/home");
     }
   };
 
@@ -100,61 +142,9 @@ function EditProfile() {
           Edit Profile
         </h1>
 
-        {/* Profile Picture Upload Section */}
-        <div className="flex flex-col items-center mb-6">
-          <div className="relative">
-            {updateprofileimg ? (
-              <img
-                src={updateprofileimg}
-                name="image"
-                alt="User Avatar"
-                className="w-32 h-32 rounded-full object-cover border border-gray-300 shadow-sm"
-              />
-            ) : (
-              <FaUserCircle
-                className="w-32 h-32 text-[#a7a8a8]
-border border-gray-300 shadow-sm rounded-full"
-              />
-            )}
-
-            <label
-              htmlFor="fileInput"
-              className="absolute bottom-0 right-0 bg-white border border-gray-500 text-gray-700 w-9 h-9 rounded-full cursor-pointer hover:bg-gray-100 flex items-center justify-center shadow"
-            >
-              📷
-            </label>
-
-            <input
-              id="fileInput"
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const imagefile = e.target.files[0];
-                if (imagefile) {
-                  UserUploadImage(imagefile);
-                }
-              }}
-            />
-          </div>
-
-          <p className="text-sm text-gray-500 mt-2">
-            Click the camera to change photo
-          </p>
-        </div>
-
         {/* Form */}
         <Formik
-          initialValues={{
-            firstname: UserInfo?.firstname || "",
-            lastname: UserInfo?.lastname || "",
-            email: UserInfo?.email || "",
-
-            date_of_birth: UserInfo?.date_of_birth
-              ? new Date(UserInfo.date_of_birth).toISOString().split("T")[0]
-              : "",
-            gender: UserInfo?.gender || "",
-          }}
+          initialValues={IntailValues}
           enableReinitialize={true}
           validationSchema={validationSchema}
           onSubmit={(values, action) => {
@@ -163,6 +153,67 @@ border border-gray-300 shadow-sm rounded-full"
         >
           {({ isSubmitting, handleSubmit, setFieldValue }) => (
             <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="flex flex-col items-center mb-6">
+                <div className="relative group w-32 h-32">
+                  {previewImage ? (
+                    <>
+                      <img
+                        src={previewImage}
+                        alt="User Avatar"
+                        className="w-32 h-32 rounded-full object-cover border border-gray-300 shadow-sm"
+                      />
+
+                      {/* Delete icon (hover par) */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setpreviewImage(null);
+                          setFieldValue("image", null);
+                        }}
+                        className="absolute top-1 right-1 bg-black/60 text-white 
+                   w-7 h-7 rounded-full flex items-center justify-center
+                   opacity-0 group-hover:opacity-100 transition"
+                        title="Remove image"
+                      >
+                        <FaTrashAlt className="text-sm" />
+                      </button>
+                    </>
+                  ) : (
+                    <FaUserCircle className="w-32 h-32 text-[#a7a8a8] border border-gray-300 shadow-sm rounded-full" />
+                  )}
+
+                  {/* Camera icon */}
+                  <label
+                    htmlFor="fileInput"
+                    className="absolute bottom-0 right-0 bg-white border border-gray-500 
+               text-gray-700 w-9 h-9 rounded-full cursor-pointer 
+               hover:bg-gray-100 flex items-center justify-center shadow"
+                  >
+                    📷
+                  </label>
+
+                  <input
+                    id="fileInput"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (!file) return;
+
+                      if (!file.type.startsWith("image/")) return;
+
+                      setFieldValue("image", file);
+                      setpreviewImage(URL.createObjectURL(file));
+                    }}
+                  />
+                </div>
+
+                <p className="text-sm text-gray-500 mt-2">
+                  Click the camera to change photo
+                </p>
+              </div>
+
               {/* First & Last name row */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -303,7 +354,7 @@ border border-gray-300 shadow-sm rounded-full"
                       : "bg-[#fbba00] opacity-100 hover:opacity-90 cursor-pointer text-white"
                   }`}
                 >
-                  {isSubmitting ? "Submitting..." : "Submit"}
+                  {isSubmitting ? "Updating..." : "Update Profile"}
                 </button>
 
                 <button

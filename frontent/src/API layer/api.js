@@ -251,23 +251,25 @@ export const GoogleCredential_Login_API = async (datatoken) => {
   try {
     const googleToken = datatoken.credential;
 
-    const response = await axios.post(`${API_Url}/auth/google`, {
+    const response = await axios.post(`${API_Url}/user/auth/google`, {
       token: googleToken,
     });
 
     console.log("Backend Response:", response.data);
     console.log("Backend Response:", response);
 
-    const navigate = useNavigate();
+    // const navigate = useNavigate();
 
-    if (response.status === 401) {
-      localStorage.removeItem("token");
-      navigate("/login");
-      return;
-    }
+    // if (response.status === 401) {
+    //   localStorage.removeItem("token");
+    //   navigate("/login");
+    //   return;
+    // }
     if (response.data?.token) {
       localStorage.setItem("token", response.data.token);
     }
+
+    console.log(response?.data.token);
 
     toast.success(response.data?.message);
     return { success: true, response: response, status: response.status };
@@ -529,6 +531,7 @@ export const user_update_all_info = async (data) => {
       data,
       {
         headers: {
+          "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${Usertoken}`,
         },
       },

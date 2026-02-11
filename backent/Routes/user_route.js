@@ -29,8 +29,8 @@ const {
 
 // Multer Middlewares
 
-const PostMulter = require("../Middleware/post_multer_middleware");
-const ProfileImageMulter = require("../Middleware/profile_multer_middleware");
+const PostMulter = require("../Multer/post_multer_middleware");
+const ProfileImageMulter = require("../Multer/profile_multer_middleware");
 
 //
 const {
@@ -41,7 +41,7 @@ const {
 
 // Routers   ----------------------------
 
-// Get ---------------------------------------
+// Get ------------------------------GET---------
 router.get("/getpostdata", auth_middleware, UserGetDataController);
 
 router.get("/getuserinfo_data", auth_middleware, getUserInfoDataController);
@@ -61,7 +61,7 @@ router.get("/getAllMyPosts", auth_middleware, GetMyPostController);
 router.get("/getAllNotification", auth_middleware, getNotificationController);
 router.get("/getAllFollowStatus", auth_middleware, getFollowStatusController);
 
-// Post ---------------------
+// Post ----------------------------POST--------
 
 router.post(
   "/postdata",
@@ -83,7 +83,7 @@ router.post(
   UserPostCommentReplyController,
 );
 
-router.post("/auth/google", auth_middleware, googleAuthController);
+router.post("/auth/google", googleAuthController);
 
 // delete -----------------------------
 
@@ -98,7 +98,12 @@ router.patch(
   UserProfileUpdateController,
 );
 
-router.patch("/UpdateUserinfo_data", auth_middleware, UpdateUserInfoController);
+router.patch(
+  "/UpdateUserinfo_data", 
+  auth_middleware,
+  ProfileImageMulter.single("image"),
+  UpdateUserInfoController,
+);
 
 router.patch("/like", auth_middleware, UserPatchLikeController);
 
