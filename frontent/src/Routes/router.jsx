@@ -9,8 +9,8 @@ import {
 //
 import CreatePosts from "../Components/create_posts";
 import Home from "../Components/Home";
-import Login from "../Components/login";
-import SignUp from "../Components/signup";
+import Login from "../Components/auth/login";
+import SignUp from "../Components/auth/signup";
 import Navbar from "../Components/Navbar";
 import EditProfile from "../Components/edit_profile";
 import MyPost from "../Components/my_posts";

@@ -9,7 +9,7 @@ require("dotenv").config();
 //  path
 const connectDB = require("./database/db");
 const UserRoute = require("./Routes/user_route");
-
+const UserFollow = require("./Routes/user_follow_route")
 // db
 connectDB();
 
@@ -20,6 +20,7 @@ app.use(express.json());
 app.use("/upload", express.static("Upload"));
 app.use("/UserProfiles", express.static("UserProfiles"));
 app.use("/user", UserRoute);
+app.use("/user_follow" , UserFollow)
 
 
 

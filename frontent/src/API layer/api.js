@@ -217,34 +217,7 @@ export const get_user_notification = async () => {
   }
 };
 
-export const getAllFollowStatus = async () => {
-  try {
-    const Usertoken = localStorage.getItem("token");
-    const response = await axios.get(
-      "http://localhost:9090/user/getAllFollowStatus",
-      {
-        headers: {
-          Authorization: `Bearer ${Usertoken}`,
-        },
-      },
-    );
 
-    // toast.success(response.data?.message);
-    return { success: true, response: response, status: response.status };
-  } catch (err) {
-    console.error(`Login info error ${err}`);
-    if (err.response) {
-      // toast.error(err.response.data?.message);
-      return {
-        success: false,
-        status: err.response.status,
-        response: err.response,
-      };
-    }
-
-    toast.error("Network error: Please check your internet connection.");
-  }
-};
 // Post APIs-------------------------------
 
 export const GoogleCredential_Login_API = async (datatoken) => {

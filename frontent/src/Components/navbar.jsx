@@ -9,10 +9,9 @@ import {
 } from "react-icons/fa";
 import { UserContext } from "../Context/context";
 
-import {
-  get_user_notification,
-  respond_user_follow_click,
-} from "../API layer/api";
+import { get_user_notification } from "../API layer/api";
+
+import { respond_user_follow_click } from "../API layer/user_follow_api";
 
 const Navbar = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);

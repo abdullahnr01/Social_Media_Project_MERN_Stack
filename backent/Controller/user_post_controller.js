@@ -96,23 +96,6 @@ const getNotificationController = async (req, res) => {
   }
 };
 
-const getFollowStatusController = async (req, res) => {
-  try {
-    const loginUserId = req.UserId;
-    const followStatus = await UserFollow.find(
-      { targetuser: loginUserId },
-      "status"
-    ).sort({ createdAt: -1 });
-
-    return res.status(200).json({
-      data: followStatus,
-    });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: "Internal Server error." });
-  }
-};
-
 // Post ---------------------------------------
 
 const UserPostController = async (req, res) => {
@@ -167,7 +150,7 @@ const UserPostCommentController = async (req, res) => {
     });
 
     const populatedComment = await UserComment.findById(
-      newComment._id
+      newComment._id,
     ).populate("userId", "firstname lastname image");
 
     const io = req.app.get("io");
@@ -208,7 +191,7 @@ const UserPostCommentReplyController = async (req, res) => {
 
     const populatedReply = await savedReply.populate(
       "userId",
-      "firstname lastname image"
+      "firstname lastname image",
     );
 
     const io = req.app.get("io");
@@ -228,54 +211,54 @@ const UserPostCommentReplyController = async (req, res) => {
   }
 };
 
-const followUserController = async (req, res) => {
-  try {
-    const loginUserId = req.UserId;
-    const targetUserId = req.body.userId;
+// const followUserController = async (req, res) => {
+//   try {
+//     const loginUserId = req.UserId;
+//     const targetUserId = req.body.userId;
 
-    const newFollow = await UserFollow.create({
-      loginUser: loginUserId,
-      targetuser: targetUserId,
-      status: "Pending...",
-    });
+//     const newFollow = await UserFollow.create({
+//       loginUser: loginUserId,
+//       targetuser: targetUserId,
+//       status: "Pending...",
+//     });
 
-    return res.status(200).json({
-      message: "Follow request sent..",
-      follow: newFollow,
-    });
-  } catch (err) {
-    console.error(`User following Error: ${err}`);
-    return res.status(500).json({ message: "Internal Server error." });
-  }
-};
+//     return res.status(200).json({
+//       message: "Follow request sent..",
+//       follow: newFollow,
+//     });
+//   } catch (err) {
+//     console.error(`User following Error: ${err}`);
+//     return res.status(500).json({ message: "Internal Server error." });
+//   }
+// };
 
-const respondFollowController = async (req, res) => {
-  try {
-    const loginUserId = req.UserId;
-    const { targetId, action } = req.body;
-    const updated = await UserFollow.findOneAndUpdate(
-      { targetuser: loginUserId, loginUser: targetId },
-      { status: action },
-      { new: true }
-    );
+// const respondFollowController = async (req, res) => {
+//   try {
+//     const loginUserId = req.UserId;
+//     const { targetId, action } = req.body;
+//     const updated = await UserFollow.findOneAndUpdate(
+//       { targetuser: loginUserId, loginUser: targetId },
+//       { status: action },
+//       { new: true }
+//     );
 
-    console.log(updated.status);
-    const io = req.app.get("io");
-    io.emit("followStatusUpdated", {
-      targetId,
-      loginUserId,
-      follow_Status: updated.status,
-    });
+//     console.log(updated.status);
+//     const io = req.app.get("io");
+//     io.emit("followStatusUpdated", {
+//       targetId,
+//       loginUserId,
+//       follow_Status: updated.status,
+//     });
 
-    return res.status(200).json({
-      message: `Request ${action} successfully`,
-      response: updated,
-    });
-  } catch (err) {
-    console.error(`Respond User following Error: ${err}`);
-    return res.status(500).json({ message: "Internal Server error." });
-  }
-};
+//     return res.status(200).json({
+//       message: `Request ${action} successfully`,
+//       response: updated,
+//     });
+//   } catch (err) {
+//     console.error(`Respond User following Error: ${err}`);
+//     return res.status(500).json({ message: "Internal Server error." });
+//   }
+// };
 
 // Delete ------------------------------------
 
@@ -338,10 +321,8 @@ module.exports = {
   getAllCommentsController,
   UserPostCommentReplyController,
   getAllCommentReplyController,
-  followUserController,
+
   getNotificationController,
-  respondFollowController,
-  getFollowStatusController,
 };
 
 // const UploadImageController = async (req, res) => {

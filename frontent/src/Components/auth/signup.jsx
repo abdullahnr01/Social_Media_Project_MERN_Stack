@@ -5,8 +5,8 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useState, useContext } from "react";
 
 // local
-import { UserContext } from "../Context/context";
-import { user_sign_up } from "../API layer/api";
+import { UserContext } from "../../Context/context";
+import { user_sign_up } from "../../API layer/api";
 
 function SignUp() {
   const [showPassword, setShowPassword] = useState(false);

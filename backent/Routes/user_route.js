@@ -10,10 +10,9 @@ const {
   getAllCommentsController,
   UserPostCommentReplyController,
   getAllCommentReplyController,
-  followUserController,
+  // followUserController,
   getNotificationController,
-  respondFollowController,
-  getFollowStatusController,
+  // respondFollowController,
 } = require("../Controller/user_post_controller");
 
 const {
@@ -59,7 +58,7 @@ router.get(
 router.get("/getAllMyPosts", auth_middleware, GetMyPostController);
 
 router.get("/getAllNotification", auth_middleware, getNotificationController);
-router.get("/getAllFollowStatus", auth_middleware, getFollowStatusController);
+
 
 // Post ----------------------------POST--------
 
@@ -73,7 +72,7 @@ router.post(
 router.post("/signup", user_signUp_middleware, UserSignUpController);
 router.post("/login", user_login_middleware, UserloginController);
 
-router.post("/follow", auth_middleware, followUserController);
+// router.post("/follow", auth_middleware, followUserController);
 
 router.post("/comment", auth_middleware, UserPostCommentController);
 
@@ -99,7 +98,7 @@ router.patch(
 );
 
 router.patch(
-  "/UpdateUserinfo_data", 
+  "/UpdateUserinfo_data",
   auth_middleware,
   ProfileImageMulter.single("image"),
   UpdateUserInfoController,
@@ -107,6 +106,6 @@ router.patch(
 
 router.patch("/like", auth_middleware, UserPatchLikeController);
 
-router.patch("/res_follow", auth_middleware, respondFollowController);
+// router.patch("/res_follow", auth_middleware, respondFollowController);
 
 module.exports = router;
