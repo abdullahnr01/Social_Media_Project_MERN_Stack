@@ -67,7 +67,7 @@ export const respond_user_follow_click = async (targetUserId, action) => {
   try {
     const Usertoken = localStorage.getItem("token");
     const response = await axios.patch(
-      `${API_Url}user_follow/res_follow`,
+      `${API_Url}/user_follow/res_follow`,
       { targetId: targetUserId, action: action },
 
       {
@@ -76,6 +76,8 @@ export const respond_user_follow_click = async (targetUserId, action) => {
         },
       },
     );
+
+    console.log(response)
 
     toast.success(response.data?.message);
     return { success: true, response: response, status: response.status };
@@ -90,7 +92,7 @@ export const respond_user_follow_click = async (targetUserId, action) => {
       };
     }
 
-    toast.error("Network error: Please check your internet connection.");
+    toast.error("Network error: Please check your internet connection...yaha masla hai");
   }
 };
 
@@ -125,7 +127,7 @@ export const withdrawFollow = async (selectedUserId) => {
   }
 };
 
-export const unfollowUser = async () => {
+export const unfollowUser = async (selectedUserId) => {
   try {
     const Usertoken = localStorage.getItem("token");
     const response = await axios.patch(
@@ -139,7 +141,7 @@ export const unfollowUser = async () => {
       },
     );
 
-    console.log("heavy");
+    console.log(response?.data);
 
     toast.success(response.data?.message);
     return { success: true, response: response, status: response.status };
@@ -154,6 +156,6 @@ export const unfollowUser = async () => {
       };
     }
 
-    toast.error("Network error: Please check your internet connection.");
+    toast.error("Network error: Please check your internet connection.ider");
   }
 };

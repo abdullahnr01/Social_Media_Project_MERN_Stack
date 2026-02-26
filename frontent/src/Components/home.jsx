@@ -9,13 +9,6 @@ import {
   All_Comment_Reply_Gets,
 } from "../API layer/api";
 
-import {
-  user_follow_click,
-  withdrawFollow,
-  unfollowUser,
-  getAllFollowStatus,
-} from "../API layer/user_follow_api";
-
 import { UserContext } from "../Context/context";
 
 // built in
@@ -37,16 +30,19 @@ import io from "socket.io-client";
 const socket = io("http://localhost:9090");
 
 import FollowActionModal from "../Modal/withdraw_req_modal";
+import PostCards from "./Home/PostCards/PostCards_parent";
 
 //
 function Home() {
+  const { UserInfo, setSinglePost_data, AllPosts, setAllPosts } =
+    useContext(UserContext);
   // states
-  const [AllPosts, setAllPosts] = useState([]);
+  // const [AllPosts, setAllPosts] = useState([]);
 
-  console.log(AllPosts);
+  // console.log(AllPosts);
 
   //
-  const [menuOpen, setMenuOpen] = useState(null);
+
   //
   const [AllCommentGets, setAllCommentGets] = useState({});
   const [commentReplies, setCommentReplies] = useState({});
@@ -56,18 +52,7 @@ function Home() {
   const [showReplyInput, setShowReplyInput] = useState(null);
   const [showReplies, setShowReplies] = useState(null);
 
-  // Follow Request System
-  const [getfollowStatus, setfollowStatus] = useState({});
-  const [followStatus, setFollowStatus] = useState({});
-  const [iswithdrawModalOpen, setIswithdrawModalOpen] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState(null);
-  const [selectedStatus, setSelectedStatus] = useState("");
 
-  const { UserInfo, resfollowstatus } = useContext(UserContext);
-
-  console.log(UserInfo);
-
-  //
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -120,18 +105,45 @@ function Home() {
   });
 
   // follow status useeffect
-  useEffect(() => {
-    socket.on(
-      "followStatusUpdated",
-      ({ targetId, loginUserId, follow_Status }) => {
-        setFollowStatus((prev) => ({
-          ...prev,
-          [loginUserId]: { status: follow_Status },
-        }));
-      },
-    );
-    return () => socket.off("followStatusUpdated");
-  }, []);
+  // useEffect(() => {
+  //   socket.on(
+  //     "followStatusUpdated",
+  //     ({ targetId, loginUserId, follow_Status }) => {
+  //       setFollowStatus((prev) => ({
+  //         ...prev,
+  //         [loginUserId]: { status: follow_Status },
+  //       }));
+  //     },
+  //   );
+  //   return () => socket.off("followStatusUpdated");
+  // }, []);
+
+  // useEffect(() => {
+  //   socket.on("followStatusUpdated", ({ loginUserId, follow_Status }) => {
+  //     setFollowStatus((prev) => ({
+  //       ...prev,
+  //       [loginUserId]: follow_Status, // string only
+  //     }));
+  //   });
+
+  //   return () => socket.off("followStatusUpdated");
+  // }, []);
+
+  // useEffect(() => {
+  //   console.log("Updated followStatus:", followStatus);
+  // }, [followStatus]);
+
+  // useEffect(() => {
+  //   if (AllPosts.length > 0) {
+  //     const map = {};
+
+  //     AllPosts.forEach((post) => {
+  //       map[post.user_id] = post.followStatus || "Follow";
+  //     });
+
+  //     setFollowStatus(map);
+  //   }
+  // }, [AllPosts]);
 
   // functions data fetch
 
@@ -144,23 +156,31 @@ function Home() {
     }
     if (!success) return;
 
-    setAllPosts(response?.data || []);
+    setAllPosts(response?.data?.data || []);
   };
+
+  // function Edit post
+
+  // const handlePostEdit = (post) => {
+  //   console.log(post);
+  //   setSinglePost_data(post);
+  //   navigate(`/edit-post/${post._id}`);
+  // };
 
   // functions delete post
 
-  const deletedata = async (data) => {
-    const { success, status } = await delete_post_data(data);
+  // const deletedata = async (data) => {
+  //   const { success, status } = await delete_post_data(data);
 
-    if (status === 401) {
-      localStorage.removeItem("token");
-      navigate("/login");
-      return;
-    }
-    if (success) {
-      setAllPosts((prev) => prev.filter((p) => p._id !== data));
-    }
-  };
+  //   if (status === 401) {
+  //     localStorage.removeItem("token");
+  //     navigate("/login");
+  //     return;
+  //   }
+  //   if (success) {
+  //     setAllPosts((prev) => prev.filter((p) => p._id !== data));
+  //   }
+  // };
 
   // function like post
 
@@ -275,37 +295,63 @@ function Home() {
 
   //  Handle follow
 
-  const handlePostFollowReq = async (targetUserId) => {
-    console.log(targetUserId);
+  // const handlePostFollowReq = async (targetUserId) => {
+  //   console.log(targetUserId);
 
-    const currentStatus = followStatus[targetUserId]?.status;
-    if (currentStatus === "Pending..." || currentStatus === "Following") {
-      setSelectedUserId(targetUserId); // kaunsa user
-      setSelectedStatus(currentStatus); // uska status
-      setIswithdrawModalOpen(true); // modal open
+  //   const currentStatus = followStatus[targetUserId]?.status;
 
-      return;
-    }
-    const { success, response } = await user_follow_click(targetUserId);
+  //   console.log(`current status , ${currentStatus}`);
 
-    console.log(response.data.follow.status);
+  //   if (currentStatus === "Pending..." || currentStatus === "Following") {
+  //     setSelectedUserId(targetUserId); // kaunsa user
+  //     setSelectedStatus(currentStatus); // uska status
+  //     setIswithdrawModalOpen(true); // modal open
 
-    if (success) {
-      setFollowStatus((prev) => ({
-        ...prev,
-        [targetUserId]: { status: response.data.follow.status },
-      }));
-    }
-    console.log(followStatus);
-  };
+  //     return;
+  //   }
+  //   const { success, response } = await user_follow_click(targetUserId);
 
-  const handleAllGetFollowStatus = async () => {
-    const { success, response } = await getAllFollowStatus();
-  };
+  //   console.log(response.data.follow.status);
 
-  useEffect(() => {
-    handleAllGetFollowStatus();
-  }, []);
+  //   if (success) {
+  //     setFollowStatus((prev) => ({
+  //       ...prev,
+  //       [targetUserId]: response.data.follow.status,
+  //       // [targetUserId]: { status: response.data.follow.status },
+  //     }));
+  //   }
+  //   console.log(followStatus);
+  // };
+
+  // const handlePostFollowReq = async (targetUserId) => {
+  //   const currentStatus = followStatus[targetUserId];
+
+  //   if (currentStatus === "Pending..." || currentStatus === "Following") {
+  //     setSelectedUserId(targetUserId);
+  //     setSelectedStatus(currentStatus);
+  //     setIswithdrawModalOpen(true);
+  //     return;
+  //   }
+
+  //   const { success, response } = await user_follow_click(targetUserId);
+
+  //   console.log(response?.data.value);
+
+  //   if (success) {
+  //     setFollowStatus((prev) => ({
+  //       ...prev,
+  //       [targetUserId]: response.data.value,
+  //     }));
+  //   }
+  // };
+
+  // const handleAllGetFollowStatus = async () => {
+  //   const { success, response } = await getAllFollowStatus();
+  // };
+
+  // useEffect(() => {
+  //   handleAllGetFollowStatus();
+  // }, []);
   // ------------------------------
 
   return (
@@ -319,7 +365,7 @@ function Home() {
             >
               {/* 3 Dots Menu  section-----1 */}
 
-              {UserInfo._id === post.user_id._id && (
+              {/* {UserInfo._id === post.user_id && (
                 <div className="absolute top-4 right-4">
                   <button
                     onClick={() =>
@@ -332,7 +378,12 @@ function Home() {
 
                   {menuOpen === index && (
                     <div className="absolute right-0 mt-2 w-36 bg-white border rounded-lg shadow-lg z-10 overflow-hidden">
-                      <button className="w-full px-4 py-2 text-left hover:bg-gray-100">
+                      <button
+                        className="w-full px-4 py-2 text-left hover:bg-gray-100"
+                        onClick={() => {
+                          handlePostEdit(post);
+                        }}
+                      >
                         ✏️ Edit
                       </button>
                       <button
@@ -347,63 +398,10 @@ function Home() {
                     </div>
                   )}
                 </div>
-              )}
+              )} */}
               {/* Profile Image + Post Image   section----2 */}
-              {post && (
-                <>
-                  <div className="flex items-start justify-between mb-2 pt-5 px-5 bg-white ">
-                    {/* <div className="flex items-center mb-2 pt-5 pl-5"> */}
-                    {/* Left side: Profile Image + Name/Date */}
-                    <div className="flex items-start space-x-3">
-                      {post?.user_id?.image ? (
-                        <img
-                          src={post.user_id.image}
-                          alt="Profile Image"
-                          className="w-10 h-10 rounded-full object-cover border border-gray-200"
-                        />
-                      ) : (
-                        <FaUserCircle className="w-10 h-10 text-gray-400" />
-                      )}
 
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-gray-800 text-sm">
-                          {`${post?.user_id?.firstname} ${post?.user_id?.lastname}`}
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          {new Date(post.createdAt).toLocaleDateString(
-                            "en-US",
-                            {
-                              day: "numeric",
-                              month: "short",
-                              year: "numeric",
-                            },
-                          )}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Right side: Follow button */}
-                    {UserInfo._id !== post.user_id._id && (
-                      <button
-                        className="px-5 py-2 bg-[#fbba00] text-white text-sm font-medium rounded-full hover:bg-[#e0a800] transition-colors duration-200 cursor-pointer"
-                        onClick={() => handlePostFollowReq(post.user_id._id)}
-                      >
-                        {followStatus[post.user_id._id]?.status || "Follow"}
-                      </button>
-                    )}
-                  </div>
-
-                  <p className="text-gray-700 text-sm leading-relaxed mb-4 max-h-32 overflow-y-auto pl-5">
-                    {post.description}
-                  </p>
-
-                  <img
-                    src={`${post.image}`}
-                    alt={"Main Image"}
-                    className="w-full h-74 object-cover mb-1"
-                  />
-                </>
-              )}
+              <PostCards post={post} index={index} />
 
               {/* Like , comment , share  section----3 */}
               <div className="flex justify-around items-center pt-3 text-gray-600 pb-5 ">
@@ -692,7 +690,7 @@ function Home() {
 
       {/* ---------------Modal ----------------- */}
 
-      {iswithdrawModalOpen && (
+      {/* {iswithdrawModalOpen && (
         <FollowActionModal
           status={selectedStatus}
           onClose={() => setIswithdrawModalOpen(false)}
@@ -703,7 +701,7 @@ function Home() {
               if (success) {
                 setFollowStatus((prev) => ({
                   ...prev,
-                  [selectedUserId]: { status: "Follow" },
+                  [selectedUserId]: response?.data.value,
                 }));
               }
             } else if (selectedStatus === "Following") {
@@ -713,20 +711,15 @@ function Home() {
               if (success) {
                 setFollowStatus((prev) => ({
                   ...prev,
-                  [selectedUserId]: { status: "Follow" },
+                  [selectedUserId]: response?.data.value,
                 }));
               }
             }
 
             setIswithdrawModalOpen(false);
-
-            setFollowStatus((prev) => ({
-              ...prev,
-              [selectedUserId]: { status: "Follow" },
-            }));
           }}
         />
-      )}
+      )} */}
     </>
   );
 }

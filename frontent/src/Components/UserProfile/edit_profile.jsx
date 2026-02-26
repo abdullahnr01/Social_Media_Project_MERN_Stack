@@ -4,13 +4,11 @@ import { Formik, Field, ErrorMessage } from "formik";
 import { useNavigate } from "react-router-dom";
 import * as Yup from "yup";
 import { FaUserCircle, FaTrashAlt } from "react-icons/fa";
-import { UserContext } from "../Context/context";
+import { UserContext } from "../../Context/context";
 
 import {
   user_update_all_info,
-  user_profile_upload,
-  get_user_profile_img,
-} from "../API layer/api";
+} from "../../API layer/api";
 
 function EditProfile() {
   // States

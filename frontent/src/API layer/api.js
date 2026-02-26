@@ -16,7 +16,7 @@ export const all_data = async () => {
       return { success: false, status: 401, response: null };
     }
     const response = await axios.get(
-      "http://localhost:9090/user/getpostdata",
+      "http://localhost:9090/user_post/getpostdata",
 
       {
         headers: {
@@ -24,6 +24,8 @@ export const all_data = async () => {
         },
       },
     );
+
+    console.log(response?.data)
     toast.success(response.data?.message);
     return { success: true, response: response, status: response.status };
   } catch (err) {
@@ -74,7 +76,7 @@ export const get_user_login_info = async () => {
   try {
     const Usertoken = localStorage.getItem("token");
     const response = await axios.get(
-      "http://localhost:9090/user/getuserinfo_data",
+      "http://localhost:9090/user_info/getuserinfo_data",
       {
         headers: {
           Authorization: `Bearer ${Usertoken}`,
@@ -103,7 +105,7 @@ export const get_user_profile_img = async () => {
   try {
     const Usertoken = localStorage.getItem("token");
     const response = await axios.get(
-      "http://localhost:9090/user/getuserprofileimage",
+      "http://localhost:9090/user_info/getuserprofileimage",
       {
         headers: {
           Authorization: `Bearer ${Usertoken}`,
@@ -132,7 +134,7 @@ export const All_CommentGets = async (postId) => {
   try {
     const Usertoken = localStorage.getItem("token");
     const response = await axios.get(
-      "http://localhost:9090/user/getAllcomments",
+      "http://localhost:9090/user_comment/getAllcomments",
 
       {
         headers: {
@@ -162,7 +164,7 @@ export const All_Comment_Reply_Gets = async (commentId) => {
   try {
     const Usertoken = localStorage.getItem("token");
     const response = await axios.get(
-      "http://localhost:9090/user/getAllCommentreplies",
+      "http://localhost:9090/user_comment/getAllCommentreplies",
 
       {
         headers: {
@@ -224,7 +226,7 @@ export const GoogleCredential_Login_API = async (datatoken) => {
   try {
     const googleToken = datatoken.credential;
 
-    const response = await axios.post(`${API_Url}/user/auth/google`, {
+    const response = await axios.post(`${API_Url}/user_info/auth/google`, {
       token: googleToken,
     });
 
@@ -261,40 +263,12 @@ export const GoogleCredential_Login_API = async (datatoken) => {
   }
 };
 
-export const user_post_data = async (data) => {
-  try {
-    const Usertoken = localStorage.getItem("token");
-    const response = await axios.post(
-      "http://localhost:9090/user/postdata",
-      data,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${Usertoken}`,
-        },
-      },
-    );
-    toast.success(response.data?.message);
-    return { success: true, response: response, status: response.status };
-  } catch (err) {
-    console.error(`Post data error ${err}`);
-    if (err.response) {
-      toast.error(err.response.data?.message);
-      return {
-        success: false,
-        status: err.response.status,
-        response: err.response,
-      };
-    }
 
-    toast.error("Network error: Please check your internet connection.");
-  }
-};
 
 export const user_sign_up = async (data) => {
   try {
     const response = await axios.post(
-      "http://localhost:9090/user/signup",
+      "http://localhost:9090/user_info/signup",
       data,
     );
 
@@ -317,7 +291,7 @@ export const user_sign_up = async (data) => {
 
 export const user_login_in = async (data) => {
   try {
-    const response = await axios.post("http://localhost:9090/user/login", data);
+    const response = await axios.post("http://localhost:9090/user_info/login", data);
 
     if (response.data?.token) {
       localStorage.setItem("token", response.data.token);
@@ -344,7 +318,7 @@ export const user_comment_post = async (data) => {
   try {
     const Usertoken = localStorage.getItem("token");
     const response = await axios.post(
-      "http://localhost:9090/user/comment",
+      "http://localhost:9090/user_comment/comment",
       data,
       {
         headers: {
@@ -374,7 +348,7 @@ export const user_comment_reply_post = async (data) => {
   try {
     const Usertoken = localStorage.getItem("token");
     const response = await axios.post(
-      "http://localhost:9090/user/comment_reply_post",
+      "http://localhost:9090/user_comment/comment_reply_post",
       data,
       {
         headers: {
@@ -400,69 +374,69 @@ export const user_comment_reply_post = async (data) => {
   }
 };
 
-export const user_follow_click = async (targetUserId) => {
-  try {
-    const Usertoken = localStorage.getItem("token");
-    const response = await axios.post(
-      "http://localhost:9090/user/follow",
-      { userId: targetUserId },
+// export const user_follow_click = async (targetUserId) => {
+//   try {
+//     const Usertoken = localStorage.getItem("token");
+//     const response = await axios.post(
+//       "http://localhost:9090/user/follow",
+//       { userId: targetUserId },
 
-      {
-        headers: {
-          Authorization: `Bearer ${Usertoken}`,
-        },
-      },
-    );
+//       {
+//         headers: {
+//           Authorization: `Bearer ${Usertoken}`,
+//         },
+//       },
+//     );
 
-    console.log("heavy");
+//     console.log("heavy");
 
-    toast.success(response.data?.message);
-    return { success: true, response: response, status: response.status };
-  } catch (err) {
-    console.error(`User following error ${err}`);
-    if (err.response) {
-      // toast.error(err.response.data?.message);
-      return {
-        success: false,
-        status: err.response.status,
-        response: err.response,
-      };
-    }
+//     toast.success(response.data?.message);
+//     return { success: true, response: response, status: response.status };
+//   } catch (err) {
+//     console.error(`User following error ${err}`);
+//     if (err.response) {
+//       // toast.error(err.response.data?.message);
+//       return {
+//         success: false,
+//         status: err.response.status,
+//         response: err.response,
+//       };
+//     }
 
-    toast.error("Network error: Please check your internet connection.");
-  }
-};
+//     toast.error("Network error: Please check your internet connection.");
+//   }
+// };
 
-export const respond_user_follow_click = async (targetUserId, action) => {
-  try {
-    const Usertoken = localStorage.getItem("token");
-    const response = await axios.patch(
-      "http://localhost:9090/user/res_follow",
-      { targetId: targetUserId, action: action },
+// export const respond_user_follow_click = async (targetUserId, action) => {
+//   try {
+//     const Usertoken = localStorage.getItem("token");
+//     const response = await axios.patch(
+//       "http://localhost:9090/user/res_follow",
+//       { targetId: targetUserId, action: action },
 
-      {
-        headers: {
-          Authorization: `Bearer ${Usertoken}`,
-        },
-      },
-    );
+//       {
+//         headers: {
+//           Authorization: `Bearer ${Usertoken}`,
+//         },
+//       },
+//     );
 
-    toast.success(response.data?.message);
-    return { success: true, response: response, status: response.status };
-  } catch (err) {
-    console.error(`User following error ${err}`);
-    if (err.response) {
-      toast.error(err.response.data?.message);
-      return {
-        success: false,
-        status: err.response.status,
-        response: err.response,
-      };
-    }
+//     toast.success(response.data?.message);
+//     return { success: true, response: response, status: response.status };
+//   } catch (err) {
+//     console.error(`User following error ${err}`);
+//     if (err.response) {
+//       toast.error(err.response.data?.message);
+//       return {
+//         success: false,
+//         status: err.response.status,
+//         response: err.response,
+//       };
+//     }
 
-    toast.error("Network error: Please check your internet connection.");
-  }
-};
+//     toast.error("Network error: Please check your internet connection.");
+//   }
+// };
 
 // Delete APIs--------------------------------
 
@@ -470,7 +444,7 @@ export const delete_post_data = async (data) => {
   try {
     const Usertoken = localStorage.getItem("token");
     const response = await axios.delete(
-      "http://localhost:9090/user/deletepostdata",
+      "http://localhost:9090/user_post/deletepostdata",
 
       {
         params: { userId: data },
@@ -500,7 +474,7 @@ export const user_update_all_info = async (data) => {
   try {
     const Usertoken = localStorage.getItem("token");
     const response = await axios.patch(
-      "http://localhost:9090/user/UpdateUserinfo_data",
+      "http://localhost:9090/user_info/UpdateUserinfo_data",
       data,
       {
         headers: {
@@ -560,7 +534,7 @@ export const user_profile_upload = async (data) => {
   try {
     const Usertoken = localStorage.getItem("token");
     const response = await axios.patch(
-      "http://localhost:9090/user/uploadprofile",
+      "http://localhost:9090/user_info/uploadprofile",
       data,
       {
         headers: {

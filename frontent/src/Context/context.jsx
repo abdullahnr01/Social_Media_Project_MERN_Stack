@@ -12,7 +12,9 @@ export const UserContextProvider = ({ children }) => {
   });
 
   const [AllPosts, setAllPosts] = useState([]);
+  const [singlePost_data, setSinglePost_data] = useState({});
   const [AllPostsAgain, setAllPostsAgain] = useState(false);
+  const [userPostsProfile, setUserPostsProfile] = useState({});
   //
   const [UserInfo, setUserInfo] = useState({});
 
@@ -38,10 +40,18 @@ export const UserContextProvider = ({ children }) => {
         setCredentials,
         AllPosts,
         setAllPosts,
-        setAllPostsAgain,
-        AllPostsAgain,
+        //
         UserInfo,
         setUserInfo,
+        //
+        singlePost_data,
+        setSinglePost_data,
+        userPostsProfile,
+        setUserPostsProfile,
+        //
+        setAllPostsAgain,
+        AllPostsAgain,
+        // function
         UserInfofetch,
       }}
     >

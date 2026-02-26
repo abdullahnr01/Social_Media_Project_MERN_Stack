@@ -7,13 +7,14 @@ import {
   Navigate,
 } from "react-router-dom";
 //
-import CreatePosts from "../Components/create_posts";
+import CreatePosts from "../Components/Posts/Post_CRUD/create_posts";
 import Home from "../Components/Home";
 import Login from "../Components/auth/login";
 import SignUp from "../Components/auth/signup";
 import Navbar from "../Components/Navbar";
-import EditProfile from "../Components/edit_profile";
-import MyPost from "../Components/my_posts";
+import EditProfile from "../Components/UserProfile/edit_profile";
+import EditPost from "../Components/Posts/Post_CRUD/edit_posts";
+import User_Profile_Posts from "../Components/Posts/UserProfilePosts/user_profile_posts";
 
 //
 import ProtectedRoute from "../Protected Route/protected";
@@ -34,22 +35,6 @@ function AllRouters() {
           <Route path="/signup" element={<SignUp />} />
         </Route>
 
-        {/* <Route element={<ProtectedRoute />}>
-          {!hidenavbar && <Navbar />}
-          <Route
-            element={
-              <>
-                <Navbar />
-                <Outlet />
-              </>
-            }
-          ></Route>
-          <Route path="/home" element={<Home />} />
-          <Route path="/edit-profile" element={<EditProfile />} />
-          <Route path="/create-post" element={<CreatePosts />} />
-          <Route path="/my-posts" element={<MyPost />} />
-        </Route> */}
-
         <Route element={<ProtectedRoute />}>
           <Route
             element={
@@ -63,7 +48,11 @@ function AllRouters() {
             <Route path="/home" element={<Home />} />
             <Route path="/edit-profile" element={<EditProfile />} />
             <Route path="/create-post" element={<CreatePosts />} />
-            <Route path="/my-posts" element={<MyPost />} />
+            <Route path="/edit-post/:id" element={<EditPost />} />
+            <Route
+              path="/user_profile_posts"
+              element={<User_Profile_Posts />}
+            />
           </Route>
         </Route>
       </Routes>
@@ -72,3 +61,21 @@ function AllRouters() {
 }
 
 export default AllRouters;
+
+{
+  /* <Route element={<ProtectedRoute />}>
+          {!hidenavbar && <Navbar />}
+          <Route
+            element={
+              <>
+                <Navbar />
+                <Outlet />
+              </>
+            }
+          ></Route>
+          <Route path="/home" element={<Home />} />
+          <Route path="/edit-profile" element={<EditProfile />} />
+          <Route path="/create-post" element={<CreatePosts />} />
+          <Route path="/my-posts" element={<MyPost />} />
+        </Route> */
+}

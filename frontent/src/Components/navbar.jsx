@@ -15,6 +15,7 @@ import { respond_user_follow_click } from "../API layer/user_follow_api";
 
 const Navbar = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [dropdownOpenTwo, setDropdownOpenTwo] = useState(false);
   const [openNotification, setOpenNotification] = useState(false);
   const [request, setRequest] = useState([]);
   const [removingId, setRemovingId] = useState(null);
@@ -44,10 +45,15 @@ const Navbar = () => {
     };
   }, []);
 
+
+  useEffect(() => {
+
+  } , [])
+
   // functions -------------------------
 
   const handleGoToMyPosts = () => {
-    navigate("/my-posts");
+    navigate(`/user_profile_posts?id=${UserInfo._id}`);
   };
   const handlelogout = () => {
     localStorage.removeItem("token");
@@ -57,6 +63,7 @@ const Navbar = () => {
   //
   const handleGetAllNotification = async (targetId) => {
     const { success, response, status } = await get_user_notification(targetId);
+    // console.log(response?.data)
     if (success) {
       const data = response?.data?.data;
       setRequest(data);
