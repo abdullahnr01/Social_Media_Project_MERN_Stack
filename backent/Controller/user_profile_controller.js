@@ -12,27 +12,7 @@ const streamifier = require("streamifier");
 const UserloginSecretKey = process.env.LOGIN_SECRET_KEY;
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-const GetMyPostController = async (req, res) => {
-  try {
-    const User_Id = req.UserId;
-
-    const MyPosts = await User.find({ user_id: User_Id });
-
-    return res.status(200).json({
-      success: true,
-      message: "My posts fetched successfully",
-      response: MyPosts,
-    });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({
-      success: false,
-      message: "Server error while fetching my posts",
-    });
-  }
-};
-
-const getUserInfoDataController = async (req, res) => {
+module.exports.getUserInfoDataController = async (req, res) => {
   try {
     const user = await UserSignUp.findById(req.UserId).select("-password -__v");
 
@@ -48,7 +28,7 @@ const getUserInfoDataController = async (req, res) => {
   }
 };
 
-const getUserPrflImgController = async (req, res) => {
+module.exports.getUserPrflImgController = async (req, res) => {
   try {
     const user = await UserSignUp.findById(req.UserId).select("image");
 
@@ -65,7 +45,7 @@ const getUserPrflImgController = async (req, res) => {
   }
 };
 
-const UserloginController = async (req, res) => {
+module.exports.UserloginController = async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await UserSignUp.findOne({ email });
@@ -86,7 +66,7 @@ const UserloginController = async (req, res) => {
   }
 };
 
-const UserSignUpController = async (req, res) => {
+module.exports.UserSignUpController = async (req, res) => {
   try {
     const { firstname, lastname, date_of_birth, gender, email, password } =
       req.body;
@@ -107,7 +87,7 @@ const UserSignUpController = async (req, res) => {
   }
 };
 
-const UpdateUserInfoController = async (req, res) => {
+module.exports.UpdateUserInfoController = async (req, res) => {
   try {
     const { firstname, lastname, date_of_birth, gender, image } = req.body;
     const User_Id = req.UserId;
@@ -166,7 +146,7 @@ const UpdateUserInfoController = async (req, res) => {
   }
 };
 
-const UserProfileUpdateController = async (req, res) => {
+module.exports.UserProfileUpdateController = async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded!" });
@@ -202,7 +182,7 @@ const UserProfileUpdateController = async (req, res) => {
   }
 };
 
-const googleAuthController = async (req, res) => {
+module.exports.googleAuthController = async (req, res) => {
   try {
     const { token } = req.body;
 
@@ -252,15 +232,4 @@ const googleAuthController = async (req, res) => {
       message: "Internal server error",
     });
   }
-};
-
-module.exports = {
-  getUserInfoDataController,
-  getUserPrflImgController,
-  UserloginController,
-  UserSignUpController,
-  UpdateUserInfoController,
-  UserProfileUpdateController,
-  GetMyPostController,
-  googleAuthController,
 };

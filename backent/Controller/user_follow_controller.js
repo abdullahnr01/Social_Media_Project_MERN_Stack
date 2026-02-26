@@ -24,15 +24,30 @@ module.exports.followUserController = async (req, res) => {
     const loginUserId = req.UserId;
     const targetUserId = req.body.userId;
 
-    const newFollow = await UserFollow.create({
+    const existingFollow = await UserFollow.findOne({
       loginUser: loginUserId,
       targetuser: targetUserId,
-      status: "Pending...",
     });
 
+    let updatedFollow;
+
+    if (existingFollow) {
+      updatedFollow = await UserFollow.findOneAndUpdate(
+        { loginUser: loginUserId, targetuser: targetUserId },
+        { status: "Pending", isDeleted: false },
+        { new: true },
+      );
+    } else {
+      updatedFollow = await UserFollow.create({
+        loginUser: loginUserId,
+        targetuser: targetUserId,
+        status: "Pending",
+      });
+    }
     return res.status(200).json({
       message: "Follow request sent..",
-      follow: newFollow,
+      value: "Pending...",
+      data: updatedFollow,
     });
   } catch (err) {
     console.error(`User following Error: ${err}`);
@@ -46,21 +61,39 @@ module.exports.respondFollowController = async (req, res) => {
     const { targetId, action } = req.body;
     const updated = await UserFollow.findOneAndUpdate(
       { targetuser: loginUserId, loginUser: targetId },
-      { status: action },
+      {
+        status: action,
+        isDeleted: true,
+      },
       { new: true },
     );
 
-    console.log(updated.status);
+    if (!updated) {
+      return res.status(404).json({ message: "Request not found" });
+    }
+
+    let frontendStatus;
+    if (action === "accepted") {
+      frontendStatus = "Following";
+    } else if (action === "rejected") {
+      frontendStatus = "Follow";
+    } else {
+      frontendStatus = updated.status; // fallback
+    }
+
     const io = req.app.get("io");
     io.emit("followStatusUpdated", {
       targetId,
       loginUserId,
-      follow_Status: updated.status,
+      follow_Status: frontendStatus,
     });
 
     return res.status(200).json({
       message: `Request ${action} successfully`,
-      response: updated,
+      response: {
+        ...updated.toObject(),
+        followStatus: frontendStatus, // frontend-friendly
+      },
     });
   } catch (err) {
     console.error(`Respond User following Error: ${err}`);
@@ -77,7 +110,7 @@ module.exports.withdrawFollowController = async (req, res) => {
     const existingFollow = await UserFollow.findOne({
       loginUser: loginUserId,
       targetuser: targetUserId,
-      status: "Pending...",
+      status: "Pending",
       isDeleted: false, // soft delete
     });
 
@@ -95,6 +128,7 @@ module.exports.withdrawFollowController = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Follow request withdrawn successfully",
+      value: "Follow",
     });
   } catch (err) {
     console.error("Withdraw Follow Error:", err);
@@ -113,8 +147,7 @@ module.exports.unfollowController = async (req, res) => {
     const existingFollow = await UserFollow.findOne({
       loginUser: loginUserId,
       targetuser: targetUserId,
-      status: "Following",
-      isDeleted: false, // soft delete
+      status: "accepted",
     });
 
     if (!existingFollow) {
@@ -128,9 +161,18 @@ module.exports.unfollowController = async (req, res) => {
     existingFollow.status = "UnFollow";
     await existingFollow.save();
 
-    return res
-      .status(200)
-      .json({ success: true, message: "Unfollowed successfully" });
+    const io = req.app.get("io");
+    io.emit("UnfollowStatusUpdate", {
+      targetUserId,
+      loginUserId,
+      follow_Status: "Follow",
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Unfollowed successfully",
+      value: "Follow",
+    });
   } catch (err) {
     console.error("Unfollow Error:", err);
     return res

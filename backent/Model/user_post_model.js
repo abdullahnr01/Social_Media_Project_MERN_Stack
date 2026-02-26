@@ -11,10 +11,7 @@ const userPostSchema = new Schema(
       required: true,
     },
 
-    image: {
-      type: String,
-      required: true,
-    },
+    image: { type: [String], required: true },
     hashtags: {
       type: String,
       required: true,
@@ -27,7 +24,7 @@ const userPostSchema = new Schema(
     likes: [{ type: Schema.Types.ObjectId, ref: "UserSignUp" }],
   },
 
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const User = model("UserPost", userPostSchema);
