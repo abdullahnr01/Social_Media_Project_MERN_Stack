@@ -43,6 +43,8 @@ function Login() {
     const { success, response, status } =
       await GoogleCredential_Login_API(data);
 
+      console.log(`google response ${response}`)
+
     if (success) {
       setTimeout(() => navigate("/home"), 500);
     }
@@ -80,7 +82,6 @@ function Login() {
         resetForm();
         setCredentials({ email: "", password: "" });
         setTimeout(() => navigate("/home"), 500);
-      
       }
     } catch (err) {
       console.error("Runtime error:", err);
@@ -186,8 +187,17 @@ function Login() {
                   {isSubmitting ? "Login..." : "Login"}
                 </button>
 
+                <div className="text-right mt-1">
+                  <a
+                    href="/forgot-password"
+                    className="text-sm text-gray-900 hover:text-blue-800 hover:underline transition-colors duration-200"
+                  >
+                    Forgot Password?
+                  </a>
+                </div>
+
                 {/* Divider */}
-                <div className="flex items-center my-4">
+                <div className="flex items-center my-3">
                   <div className="flex-grow h-px bg-gray-300"></div>
                   <span className="px-3 text-sm text-gray-500">OR</span>
                   <div className="flex-grow h-px bg-gray-300"></div>

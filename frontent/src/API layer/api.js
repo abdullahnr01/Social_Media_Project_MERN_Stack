@@ -7,128 +7,69 @@ import { useNavigate } from "react-router-dom";
 
 // Get APIs-------------------------------
 
-export const all_data = async () => {
-  try {
-    const Usertoken = localStorage.getItem("token");
-    if (!Usertoken) {
-      toast.error("You are not logged in.");
-      navigate("/login");
-      return { success: false, status: 401, response: null };
-    }
-    const response = await axios.get(
-      "http://localhost:9090/user_post/getpostdata",
 
-      {
-        headers: {
-          Authorization: `Bearer ${Usertoken}`,
-        },
-      },
-    );
 
-    console.log(response?.data)
-    toast.success(response.data?.message);
-    return { success: true, response: response, status: response.status };
-  } catch (err) {
-    console.error(`Get All Post data error ${err}`);
-    if (err.response) {
-      toast.error(err.response.data?.message);
-      return {
-        success: false,
-        status: err.response.status,
-        response: err.response,
-      };
-    }
+// export const get_All_My_Posts = async () => {
+//   try {
+//     const Usertoken = localStorage.getItem("token");
+//     const response = await axios.get(
+//       "http://localhost:9090/user/getAllMyPosts",
+//       {
+//         headers: {
+//           Authorization: `Bearer ${Usertoken}`,
+//         },
+//       },
+//     );
 
-    toast.error("Network error: Please check your internet connection.");
-  }
-};
+//     // toast.success(response.data?.message);
+//     return { success: true, response: response, status: response.status };
+//   } catch (err) {
+//     console.error(`Get All My Posts error ${err}`);
+//     if (err.response) {
+//       // toast.error(err.response.data?.message);
+//       return {
+//         success: false,
+//         status: err.response.status,
+//         response: err.response,
+//       };
+//     }
 
-export const get_All_My_Posts = async () => {
-  try {
-    const Usertoken = localStorage.getItem("token");
-    const response = await axios.get(
-      "http://localhost:9090/user/getAllMyPosts",
-      {
-        headers: {
-          Authorization: `Bearer ${Usertoken}`,
-        },
-      },
-    );
+//     toast.error("Network error: Please check your internet connection.");
+//   }
+// };
 
-    // toast.success(response.data?.message);
-    return { success: true, response: response, status: response.status };
-  } catch (err) {
-    console.error(`Get All My Posts error ${err}`);
-    if (err.response) {
-      // toast.error(err.response.data?.message);
-      return {
-        success: false,
-        status: err.response.status,
-        response: err.response,
-      };
-    }
 
-    toast.error("Network error: Please check your internet connection.");
-  }
-};
 
-export const get_user_login_info = async () => {
-  try {
-    const Usertoken = localStorage.getItem("token");
-    const response = await axios.get(
-      "http://localhost:9090/user_info/getuserinfo_data",
-      {
-        headers: {
-          Authorization: `Bearer ${Usertoken}`,
-        },
-      },
-    );
+// export const get_user_profile_img = async () => {
+//   try {
+//     const Usertoken = localStorage.getItem("token");
+//     const response = await axios.get(
+//       "http://localhost:9090/user_info/getuserprofileimage",
+//       {
+//         headers: {
+//           Authorization: `Bearer ${Usertoken}`,
+//         },
+//       },
+//     );
 
-    toast.success(response.data?.message);
-    return { success: true, response: response, status: response.status };
-  } catch (err) {
-    console.error(`Login info error ${err}`);
-    if (err.response) {
-      toast.error(err.response.data?.message);
-      return {
-        success: false,
-        status: err.response.status,
-        response: err.response,
-      };
-    }
+//     console.log(response?.data)
 
-    toast.error("Network error: Please check your internet connection.");
-  }
-};
+//     // toast.success(response.data?.message);
+//     return { success: true, response: response, status: response.status };
+//   } catch (err) {
+//     console.error(`Get User Profile Image error ${err}`);
+//     if (err.response) {
+//       // toast.error(err.response.data?.message);
+//       return {
+//         success: false,
+//         status: err.response.status,
+//         response: err.response,
+//       };
+//     }
 
-export const get_user_profile_img = async () => {
-  try {
-    const Usertoken = localStorage.getItem("token");
-    const response = await axios.get(
-      "http://localhost:9090/user_info/getuserprofileimage",
-      {
-        headers: {
-          Authorization: `Bearer ${Usertoken}`,
-        },
-      },
-    );
-
-    // toast.success(response.data?.message);
-    return { success: true, response: response, status: response.status };
-  } catch (err) {
-    console.error(`Get User Profile Image error ${err}`);
-    if (err.response) {
-      // toast.error(err.response.data?.message);
-      return {
-        success: false,
-        status: err.response.status,
-        response: err.response,
-      };
-    }
-
-    toast.error("Network error: Please check your internet connection.");
-  }
-};
+//     toast.error("Network error: Please check your internet connection.");
+//   }
+// };
 
 export const All_CommentGets = async (postId) => {
   try {
@@ -230,21 +171,9 @@ export const GoogleCredential_Login_API = async (datatoken) => {
       token: googleToken,
     });
 
-    console.log("Backend Response:", response.data);
-    console.log("Backend Response:", response);
-
-    // const navigate = useNavigate();
-
-    // if (response.status === 401) {
-    //   localStorage.removeItem("token");
-    //   navigate("/login");
-    //   return;
-    // }
     if (response.data?.token) {
       localStorage.setItem("token", response.data.token);
     }
-
-    console.log(response?.data.token);
 
     toast.success(response.data?.message);
     return { success: true, response: response, status: response.status };
@@ -530,35 +459,35 @@ export const user_update_all_info = async (data) => {
 //   }
 // };
 
-export const user_profile_upload = async (data) => {
-  try {
-    const Usertoken = localStorage.getItem("token");
-    const response = await axios.patch(
-      "http://localhost:9090/user_info/uploadprofile",
-      data,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${Usertoken}`,
-        },
-      },
-    );
-    // toast.success(response.data?.message);
-    return { success: true, response: response, status: response.status };
-  } catch (err) {
-    console.error(`User Profile Upload error ${err}`);
-    if (err.response) {
-      // toast.error(err.response.data?.message);
-      return {
-        success: false,
-        status: err.response.status,
-        response: err.response,
-      };
-    }
+// export const user_profile_upload = async (data) => {
+//   try {
+//     const Usertoken = localStorage.getItem("token");
+//     const response = await axios.patch(
+//       "http://localhost:9090/user_info/uploadprofile",
+//       data,
+//       {
+//         headers: {
+//           "Content-Type": "multipart/form-data",
+//           Authorization: `Bearer ${Usertoken}`,
+//         },
+//       },
+//     );
+//     // toast.success(response.data?.message);
+//     return { success: true, response: response, status: response.status };
+//   } catch (err) {
+//     console.error(`User Profile Upload error ${err}`);
+//     if (err.response) {
+//       // toast.error(err.response.data?.message);
+//       return {
+//         success: false,
+//         status: err.response.status,
+//         response: err.response,
+//       };
+//     }
 
-    toast.error("Network error: Please check your internet connection.");
-  }
-};
+//     toast.error("Network error: Please check your internet connection.");
+//   }
+// };
 
 export const user_post_likes = async (data) => {
   try {

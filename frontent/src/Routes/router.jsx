@@ -11,7 +11,7 @@ import CreatePosts from "../Components/Posts/Post_CRUD/create_posts";
 import Home from "../Components/Home";
 import Login from "../Components/auth/login";
 import SignUp from "../Components/auth/signup";
-import Navbar from "../Components/Navbar";
+import Navbar from "../Components/navbar";
 import EditProfile from "../Components/UserProfile/edit_profile";
 import EditPost from "../Components/Posts/Post_CRUD/edit_posts";
 import User_Profile_Posts from "../Components/Posts/UserProfilePosts/user_profile_posts";
@@ -19,6 +19,7 @@ import User_Profile_Posts from "../Components/Posts/UserProfilePosts/user_profil
 //
 import ProtectedRoute from "../Protected Route/protected";
 import PublicRoute from "../Protected Route/public_route";
+import Livechat_modal from "../Components/Posts/UserProfilePosts/Modal/livechat_modal";
 //
 
 function AllRouters() {
@@ -54,6 +55,9 @@ function AllRouters() {
               element={<User_Profile_Posts />}
             />
           </Route>
+          <Route path="*" element={<Navigate to="/home" replace />} />
+
+          {/* <Route path="/test" element={<Livechat_modal />} /> */}
         </Route>
       </Routes>
     </>

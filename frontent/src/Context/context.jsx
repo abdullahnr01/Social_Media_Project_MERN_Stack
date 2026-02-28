@@ -1,6 +1,5 @@
 import React, { createContext, useState, useEffect } from "react";
-import { get_user_profile_img, get_user_login_info } from "../API layer/api";
-
+import { get_user_login_info } from "../API layer/user_profile_api";
 export const UserContext = createContext();
 
 export const UserContextProvider = ({ children }) => {
@@ -12,12 +11,13 @@ export const UserContextProvider = ({ children }) => {
   });
 
   const [AllPosts, setAllPosts] = useState([]);
-  const [singlePost_data, setSinglePost_data] = useState({});
-  const [AllPostsAgain, setAllPostsAgain] = useState(false);
   const [userPostsProfile, setUserPostsProfile] = useState({});
-  //
   const [UserInfo, setUserInfo] = useState({});
+  const [singlePost_data, setSinglePost_data] = useState({});
+  const [userChats, setUserChats] = useState([]);
+  //
 
+  const [AllPostsAgain, setAllPostsAgain] = useState(false);
   //
 
   // Functions -----------------------------------------
@@ -25,7 +25,6 @@ export const UserContextProvider = ({ children }) => {
   const UserInfofetch = async () => {
     const { response, success, status } = await get_user_login_info();
 
-    console.log(response?.data.data);
     if (success) {
       setUserInfo(response?.data?.data);
     }
@@ -48,6 +47,8 @@ export const UserContextProvider = ({ children }) => {
         setSinglePost_data,
         userPostsProfile,
         setUserPostsProfile,
+        userChats,
+        setUserChats,
         //
         setAllPostsAgain,
         AllPostsAgain,

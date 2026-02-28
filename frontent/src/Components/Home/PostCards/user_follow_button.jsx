@@ -38,12 +38,25 @@ const Follow_button = ({ post_userId }) => {
   }, []);
 
   useEffect(() => {
+    socket.on("followRequestReceived", (data) => {
+      setFollowStatus((prev) => ({
+        ...prev,
+        [data.from]: data.status, // "Requested"
+      }));
+    });
+
+    // Cleanup listener on unmount
+    return () => {
+      socket.off("followRequestReceived");
+    };
+  }, []);
+
+  useEffect(() => {
     const handleFollowUpdate = ({
       targetUserId,
       loginUserId,
       follow_Status,
     }) => {
-   
       setFollowStatus((prev) => ({
         ...prev,
         [targetUserId]: follow_Status,
@@ -58,9 +71,9 @@ const Follow_button = ({ post_userId }) => {
     };
   }, []);
 
-  // useEffect(() => {
-  //   console.log("Updated followStatus:", followStatus);
-  // }, [followStatus]);
+  useEffect(() => {
+    console.log("Updated followStatus:", followStatus);
+  }, [followStatus]);
 
   useEffect(() => {
     const map = {};
@@ -93,8 +106,6 @@ const Follow_button = ({ post_userId }) => {
     }
 
     const { success, response } = await user_follow_click(targetUserId);
-
-    console.log(response?.data.value);
 
     if (success) {
       setFollowStatus((prev) => ({

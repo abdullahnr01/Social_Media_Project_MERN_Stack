@@ -128,6 +128,7 @@ export const withdrawFollow = async (selectedUserId) => {
 };
 
 export const unfollowUser = async (selectedUserId) => {
+  console.log(`ider b dyan do ${selectedUserId}`)
   try {
     const Usertoken = localStorage.getItem("token");
     const response = await axios.patch(

@@ -4,6 +4,8 @@ import User_menu_info from "./user_menu_info";
 import { UserContext } from "../../../Context/context";
 import Follow_button from "./user_follow_button";
 import User_menu_button from "./user_menu_button";
+import User_like_Btn from "./user_like";
+import User_Share_Btn from "./user_share_btn";
 
 function PostCards({ post, index }) {
   return (
@@ -15,6 +17,15 @@ function PostCards({ post, index }) {
       </div>
 
       <Main_Media post={post} />
+
+      <div className="flex justify-around items-center pt-3 text-gray-600 pb-5 ">
+        <User_like_Btn
+          postId={post._id}
+          likeCounts={post.likeCount}
+          postLiked={post.isLiked}
+        />
+        <User_Share_Btn />
+      </div>
     </>
   );
 }

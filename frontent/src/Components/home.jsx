@@ -1,13 +1,12 @@
 // local
 import {
-  all_data,
-  delete_post_data,
-  user_post_likes,
   user_comment_post,
   All_CommentGets,
   user_comment_reply_post,
   All_Comment_Reply_Gets,
 } from "../API layer/api";
+
+import { all_data } from "../API layer/user_post_api";
 
 import { UserContext } from "../Context/context";
 
@@ -16,20 +15,13 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  FaHeart,
-  FaComment,
-  FaShare,
-  FaEllipsisV,
-  FaUserCircle,
-} from "react-icons/fa";
+import { FaComment, FaUserCircle } from "react-icons/fa";
 import { format } from "timeago.js";
 
 //
 import io from "socket.io-client";
 const socket = io("http://localhost:9090");
 
-import FollowActionModal from "../Modal/withdraw_req_modal";
 import PostCards from "./Home/PostCards/PostCards_parent";
 
 //
@@ -52,7 +44,6 @@ function Home() {
   const [showReplyInput, setShowReplyInput] = useState(null);
   const [showReplies, setShowReplies] = useState(null);
 
-
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -60,23 +51,23 @@ function Home() {
   }, []);
 
   // like useeffect
-  useEffect(() => {
-    socket.on("connect", () => {
-      console.log("Socket Connected", socket.id);
-    });
+  // useEffect(() => {
+  //   socket.on("connect", () => {
+  //     console.log("Socket Connected", socket.id);
+  //   });
 
-    socket.on("likeUpdated", (data) => {
-      setAllPosts((prev) =>
-        prev.map((p) =>
-          p._id === data.postId ? { ...p, likeCount: data.likeCount } : p,
-        ),
-      );
-    });
+  //   socket.on("likeUpdated", (data) => {
+  //     setAllPosts((prev) =>
+  //       prev.map((p) =>
+  //         p._id === data.postId ? { ...p, likeCount: data.likeCount } : p,
+  //       ),
+  //     );
+  //   });
 
-    return () => {
-      socket.off("likeUpdated");
-    };
-  }, []);
+  //   return () => {
+  //     socket.off("likeUpdated");
+  //   };
+  // }, []);
   // comment useeffect
   useEffect(() => {
     socket.on("newCommentAdded", (data) => {
@@ -184,21 +175,21 @@ function Home() {
 
   // function like post
 
-  const handlePostLikes = async (data) => {
-    try {
-      const { success, response } = await user_post_likes(data);
-      if (!success) return;
+  // const handlePostLikes = async (data) => {
+  //   try {
+  //     const { success, response } = await user_post_likes(data);
+  //     if (!success) return;
 
-      const resdata = response?.data;
-      const colordata = resdata?.isLiked;
+  //     const resdata = response?.data;
+  //     const colordata = resdata?.isLiked;
 
-      setAllPosts((prev) =>
-        prev.map((p) => (p._id === data ? { ...p, isLiked: colordata } : p)),
-      );
-    } catch (err) {
-      console.error("Like error:", err);
-    }
-  };
+  //     setAllPosts((prev) =>
+  //       prev.map((p) => (p._id === data ? { ...p, isLiked: colordata } : p)),
+  //     );
+  //   } catch (err) {
+  //     console.error("Like error:", err);
+  //   }
+  // };
 
   // Comment Section ----------------
 
@@ -406,7 +397,7 @@ function Home() {
               {/* Like , comment , share  section----3 */}
               <div className="flex justify-around items-center pt-3 text-gray-600 pb-5 ">
                 {/* Like */}
-                <button className="flex flex-col items-center group">
+                {/* <button className="flex flex-col items-center group">
                   <div className="flex items-center gap-2 group-hover:text-red-500 transition-colors">
                     <FaHeart
                       className={`text-lg cursor-pointer ${
@@ -418,7 +409,7 @@ function Home() {
                   <span className="text-xs text-gray-400 mt-1">
                     {post.likeCount} Likes
                   </span>
-                </button>
+                </button> */}
 
                 {/* Comment */}
                 <button
@@ -439,12 +430,12 @@ function Home() {
                 </button>
 
                 {/* Share */}
-                <button className="flex flex-col items-center group">
+                {/* <button className="flex flex-col items-center group">
                   <div className="flex items-center gap-2  group-hover:text-[#fbba00] transition-colors">
                     <FaShare className="text-lg" />
                   </div>
                   <span className="text-xs text-gray-400 mt-1">Shares</span>
-                </button>
+                </button> */}
               </div>
 
               {/* Comment Input field    section----4  */}
@@ -523,7 +514,10 @@ function Home() {
                           </div>
                           <div className="flex-1">
                             <div className="flex justify-between items-center">
-                              <p className="text-sm font-semibold">
+                              <p
+                                className="text-sm font-semibold cursor-pointer"
+                             
+                              >
                                 {comment?.userId?.firstname}
                               </p>
                               <span className="text-[11px] text-gray-400">
@@ -652,7 +646,7 @@ function Home() {
 
                                     <div className="flex-1">
                                       <div className="flex justify-between items-center">
-                                        <p className="text-sm font-semibold">
+                                        <p className="text-sm font-semibold cursor-pointer">
                                           {reply?.userId?.firstname ||
                                             "Unknown User"}
                                         </p>
