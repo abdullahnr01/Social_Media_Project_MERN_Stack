@@ -17,10 +17,11 @@ router.get(
   UserProfile_Controller.getUserInfoDataController,
 );
 
-router.get(
-  "/getuserprofileimage",
+router.patch(
+  "/UpdateUserinfo_data",
   auth_middleware,
-  UserProfile_Controller.getUserPrflImgController,
+  ProfileImageMulter.single("image"),
+  UserProfile_Controller.UpdateUserInfoController,
 );
 
 router.post(
@@ -36,18 +37,17 @@ router.post(
 
 router.post("/auth/google", UserProfile_Controller.googleAuthController);
 
-router.patch(
-  "/uploadprofile",
-  auth_middleware,
-  ProfileImageMulter.single("image"),
-  UserProfile_Controller.UserProfileUpdateController,
-);
+module.exports = router;
 
-router.patch(
-  "/UpdateUserinfo_data",
-  auth_middleware,
-  ProfileImageMulter.single("image"),
-  UserProfile_Controller.UpdateUserInfoController,
-);
+// router.patch(
+//   "/uploadprofile",
+//   auth_middleware,
+//   ProfileImageMulter.single("image"),
+//   UserProfile_Controller.UserProfileUpdateController,
+// );
 
-module.exports = router
+// router.get(
+//   "/getuserprofileimage",
+//   auth_middleware,
+//   UserProfile_Controller.getUserPrflImgController,
+// );

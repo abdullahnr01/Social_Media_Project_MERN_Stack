@@ -2,22 +2,77 @@
 
 const UserFollow = require("../Model/user_follow_model");
 
-module.exports.getFollowStatusController = async (req, res) => {
-  try {
-    const loginUserId = req.UserId;
-    const followStatus = await UserFollow.find(
-      { targetuser: loginUserId },
-      "status",
-    ).sort({ createdAt: -1 });
+// module.exports.getFollowStatusController = async (req, res) => {
+//   try {
+//     const loginUserId = req.UserId;
+//     const followStatus = await UserFollow.find(
+//       { targetuser: loginUserId },
+//       "status",
+//     ).sort({ createdAt: -1 });
 
-    return res.status(200).json({
-      data: followStatus,
-    });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: "Internal Server error." });
-  }
-};
+//     return res.status(200).json({
+//       data: followStatus,
+//     });
+//   } catch (err) {
+//     console.error(err);
+//     return res.status(500).json({ message: "Internal Server error." });
+//   }
+// };
+
+// module.exports.followUserController = async (req, res) => {
+//   try {
+//     const loginUserId = req.UserId;
+//     const targetUserId = req.body.userId;
+
+//     // 1️⃣ Check if login user already sent request
+//     const sentRequest = await UserFollow.findOne({
+//       loginUser: loginUserId,
+//       targetuser: targetUserId,
+//       // isDeleted: false,
+//     });
+
+//     if (sentRequest && sentRequest.status === "Pending") {
+//       return res.json({
+//         status: "Pending",
+//       });
+//     }
+
+//     console.log(sentRequest);
+
+//     // 2️⃣ Check if target user sent request
+//     const receivedRequest = await UserFollow.findOne({
+//       loginUser: targetUserId,
+//       targetuser: loginUserId,
+//       // isDeleted: false,
+//     });
+
+//     if (receivedRequest && receivedRequest.status === "Pending") {
+//       return res.json({
+//         status: "Requested",
+//       });
+//     }
+
+//     console.log("ye b null hai" ,receivedRequest)
+
+//     // 3️⃣ If no relation exists → CREATE new follow request
+//     const newRequest = await UserFollow.create({
+//       loginUser: loginUserId,
+//       targetuser: targetUserId,
+//       status: "Pending",
+//     });
+
+//     console.log(newRequest)
+
+//     return res.status(200).json({
+//       message: "Follow request sent..",
+//       value: "Pending...",
+//       data: newRequest,
+//     });
+//   } catch (err) {
+//     console.error(`User following Error: ${err}`);
+//     return res.status(500).json({ message: "Internal Server error." });
+//   }
+// };
 
 module.exports.followUserController = async (req, res) => {
   try {
@@ -30,6 +85,9 @@ module.exports.followUserController = async (req, res) => {
     });
 
     let updatedFollow;
+
+
+    // follow request send krne wala
 
     if (existingFollow) {
       updatedFollow = await UserFollow.findOneAndUpdate(
@@ -44,6 +102,21 @@ module.exports.followUserController = async (req, res) => {
         status: "Pending",
       });
     }
+
+    const io = req.app.get("io");
+    io.to(targetUserId.toString()).emit("followRequestReceived", {
+      from: loginUserId,
+      status: "Requested",
+    });
+
+    // Optionally, send to login user → "Pending"
+    // io.to(loginUserId.toString()).emit("followRequestSent", {
+    //   to: targetUserId,
+    //   status: "Pending...",
+    // });
+
+ // follow request send krne wala
+
     return res.status(200).json({
       message: "Follow request sent..",
       value: "Pending...",
