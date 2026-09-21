@@ -7,7 +7,7 @@ const userFollowSchema = new Schema(
       ref: "UserSignUp",
       required: true,
     },
-    loginUser : {
+    loginUser: {
       type: Schema.Types.ObjectId, // Logged-in user (jo follow kar raha)
       ref: "UserSignUp",
       required: true,
@@ -15,13 +15,22 @@ const userFollowSchema = new Schema(
 
     status: {
       type: String,
-      enum: ["Pending...", "accepted", "rejected"],
+      enum: [
+        "Pending",
+        "accepted",
+        "rejected",
+        "Withdraw",
+        "UnFollow",
+        "Removing",
+      ],
       default: "Pending...",
     },
+
+    isDeleted: { type: Boolean, default: false },
   },
   {
     timestamps: true, // automatically createdAt & updatedAt
-  }
+  },
 );
 
 const UserFollow = model("userfollower", userFollowSchema);

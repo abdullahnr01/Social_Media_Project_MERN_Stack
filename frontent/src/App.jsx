@@ -2,12 +2,12 @@
 
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useState } from "react";
 import { BrowserRouter } from "react-router-dom";
 
 // local
 import AllRouters from "./Routes/router";
 import { UserContextProvider } from "./Context/context";
+import SocketHandler from "./Components/Socket/socket_handler";
 
 function App() {
   return (
@@ -24,6 +24,7 @@ function App() {
       />
       <BrowserRouter>
         <UserContextProvider>
+          <SocketHandler />
           <AllRouters />
         </UserContextProvider>
       </BrowserRouter>

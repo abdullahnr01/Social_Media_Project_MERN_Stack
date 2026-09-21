@@ -1,36 +1,39 @@
 import React, { createContext, useState, useEffect } from "react";
-import { get_user_profile_img, get_user_login_info } from "../API layer/api";
-
+import { get_user_login_info } from "../API layer/user_profile_api";
 export const UserContext = createContext();
 
 export const UserContextProvider = ({ children }) => {
+  // UseStates ------------------------------------------
+
   const [credentials, setCredentials] = useState({
     email: "",
     password: "",
   });
 
   const [AllPosts, setAllPosts] = useState([]);
-  const [AllPostsAgain, setAllPostsAgain] = useState(false);
+  const [userPostsProfile, setUserPostsProfile] = useState({});
   const [UserInfo, setUserInfo] = useState({});
-  const [UserInfoAgain, setUserInfoAgain] = useState({});
-  const [profileImage, setProfileImage] = useState(null);
- 
-  const fetchProfileImage = async () => {
-    const { success, response } = await get_user_profile_img();
-    if (success) {
-      setProfileImage(response?.data?.image);
-    } else {
-      setProfileImage(null);
-    }
-  };
+  const [followStatus, setFollowStatus] = useState({});
+  const [singlePost_data, setSinglePost_data] = useState({});
+  const [userChats, setUserChats] = useState([]);
+  //
+
+  const [AllPostsAgain, setAllPostsAgain] = useState(false);
+  //
+
+  // Functions -----------------------------------------
 
   const UserInfofetch = async () => {
     const { response, success, status } = await get_user_login_info();
 
     if (success) {
-      setUserInfo(response?.data);
+      setUserInfo(response?.data?.data);
     }
   };
+
+  //
+
+  //  JSX ------------------------------------------
 
   return (
     <UserContext.Provider
@@ -39,15 +42,22 @@ export const UserContextProvider = ({ children }) => {
         setCredentials,
         AllPosts,
         setAllPosts,
-        setAllPostsAgain,
-        AllPostsAgain,
+        //
         UserInfo,
         setUserInfo,
-        UserInfoAgain,
-        setUserInfoAgain,
-        profileImage,
-        setProfileImage,
-        fetchProfileImage,
+        //
+        singlePost_data,
+        setSinglePost_data,
+        userPostsProfile,
+        setUserPostsProfile,
+        userChats,
+        setUserChats,
+        followStatus,
+        setFollowStatus,
+        //
+        setAllPostsAgain,
+        AllPostsAgain,
+        // function
         UserInfofetch,
       }}
     >

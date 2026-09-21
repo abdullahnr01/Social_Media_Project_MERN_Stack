@@ -3,23 +3,24 @@ import {
   Routes,
   Route,
   useLocation,
+  Outlet,
+  Navigate,
 } from "react-router-dom";
 //
-import CreatePosts from "../Components/create_posts";
+import CreatePosts from "../Components/Posts/Post_CRUD/create_posts";
 import Home from "../Components/Home";
-import Login from "../Components/login";
-import SignUp from "../Components/signup";
-import Navbar from "../Components/Navbar";
-import EditProfile from "../Components/edit_profile";
-import MyPost from "../Components/my_posts";
+import Login from "../Components/auth/login";
+import SignUp from "../Components/auth/signup";
+import Navbar from "../Components/navbar";
+import EditProfile from "../Pages/edit_profile";
+import EditPost from "../Components/Posts/Post_CRUD/edit_posts";
+import User_Profile_Posts from "../Components/Posts/UserProfilePosts/user_profile_posts";
 
 //
 import ProtectedRoute from "../Protected Route/protected";
 import PublicRoute from "../Protected Route/public_route";
+
 //
-import { useContext } from "react";
-import { UserContext } from "../Context/context";
-import { useEffect } from "react";
 
 function AllRouters() {
   const location = useLocation();
@@ -29,7 +30,6 @@ function AllRouters() {
 
   return (
     <>
-      {!hidenavbar && <Navbar />}
       <Routes>
         <Route element={<PublicRoute />}>
           <Route path="/login" element={<Login />} />
@@ -37,10 +37,27 @@ function AllRouters() {
         </Route>
 
         <Route element={<ProtectedRoute />}>
-          <Route path="/home" element={<Home />} />
-          <Route path="/edit-profile" element={<EditProfile />} />
-          <Route path="/create-post" element={<CreatePosts />} />
-          <Route path="/my-posts" element={<MyPost/>}/>
+          <Route
+            element={
+              <>
+                <Navbar />
+                <Outlet />
+              </>
+            }
+          >
+            <Route path="/" element={<Navigate to="/home" replace />} />
+            <Route path="/home" element={<Home />} />
+            <Route path="/edit-profile" element={<EditProfile />} />
+            <Route path="/create-post" element={<CreatePosts />} />
+            <Route path="/edit-post/:id" element={<EditPost />} />
+            <Route
+              path="/user_profile_posts"
+              element={<User_Profile_Posts />}
+            />
+          </Route>
+          <Route path="*" element={<Navigate to="/home" replace />} />
+
+          {/* <Route path="/test" element={<Livechat_modal />} /> */}
         </Route>
       </Routes>
     </>
@@ -48,3 +65,21 @@ function AllRouters() {
 }
 
 export default AllRouters;
+
+{
+  /* <Route element={<ProtectedRoute />}>
+          {!hidenavbar && <Navbar />}
+          <Route
+            element={
+              <>
+                <Navbar />
+                <Outlet />
+              </>
+            }
+          ></Route>
+          <Route path="/home" element={<Home />} />
+          <Route path="/edit-profile" element={<EditProfile />} />
+          <Route path="/create-post" element={<CreatePosts />} />
+          <Route path="/my-posts" element={<MyPost />} />
+        </Route> */
+}
