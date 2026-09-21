@@ -14,6 +14,9 @@ const UserPosts = require("./Routes/user_posts_route");
 const UserPostsComment = require("./Routes/user_comment_route");
 const UserInfo = require("./Routes/user_info_route");
 const UserLiveChat = require("./Routes/user_live_chat_route");
+const UserSearch = require("./Routes/user_search_route")
+
+
 // db
 connectDB();
 
@@ -29,6 +32,8 @@ app.use("/user_post", UserPosts);
 app.use("/user_comment", UserPostsComment);
 app.use("/user_info", UserInfo);
 app.use("/user_live", UserLiveChat);
+app.use("/user_search" , UserSearch)
+
 // Server
 const server = app.listen(PORT, () => {
   console.log("Server is listing on port no", PORT);
