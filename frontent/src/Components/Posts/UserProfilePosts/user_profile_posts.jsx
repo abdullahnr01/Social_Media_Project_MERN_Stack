@@ -5,49 +5,47 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import { UserContext } from "../../../Context/context";
 import Follow_button from "../../Home/PostCards/user_follow_button";
-import Livechat_modal from "./Modal/livechat_modal";
+import Livechat_modal from "./Modal/User_Live_Chat/livechat_modal";
 
 // API
 import { get_user_Profile_OR_Posts_API } from "../../../API layer/user_post_api";
-import { get_all_message_API } from "../../../API layer/user_live_chat_api";
+import {
+  get_all_message_API,
+  user_get_or_create_conversion,
+} from "../../../API layer/user_live_chat_api";
+
+//-----------------------function Component---------------
 const User_Profile_Posts = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
   const queryParams = new URLSearchParams(location.search);
-  const userId = queryParams.get("id");
+  const TargetUserId = queryParams.get("id");
 
+  //
   const { userPostsProfile, setUserPostsProfile, UserInfo, setUserChats } =
     useContext(UserContext);
 
+  //
   const [liveChatOpen, setIsLiveChatOpen] = useState(false);
   const [messagesLoaded, setMessagesLoaded] = useState(false);
+  const [conversionId, setConversionId] = useState("");
 
-  const targetuserId = userPostsProfile._id;
-
-  useEffect(() => {
-    console.log(userPostsProfile);
-  }, [userPostsProfile]);
+  // useEffect(() => {
+  //   console.log(userPostsProfile);
+  // }, [userPostsProfile]);
 
   useEffect(() => {
     const fetchUserProfileWithPosts = async () => {
       const { success, response, status } =
-        await get_user_Profile_OR_Posts_API(userId);
+        await get_user_Profile_OR_Posts_API(TargetUserId);
       if (success) {
         const data = response?.data?.data[0];
         setUserPostsProfile(data);
-        // console.log(data);
       }
     };
     fetchUserProfileWithPosts();
-  }, [userId]);
-
-  // UserProfile component
-  useEffect(() => {
-    if (liveChatOpen) {
-      socket.emit("joinRoom", conversationId); // backend me socket.join()
-    }
-  }, [liveChatOpen]);
+  }, [TargetUserId]);
 
   const EditProfileRoute = () => {
     navigate("/edit-profile");
@@ -56,9 +54,9 @@ const User_Profile_Posts = () => {
   const handleGetAllMessage = async () => {
     if (messagesLoaded) return;
     const { success, response, status } =
-      await get_all_message_API(targetuserId);
+      await get_all_message_API(TargetUserId);
 
-    console.log(response?.data?.data);
+    // console.log(response?.data?.data);
 
     if (status === 401) {
       localStorage.removeItem("token");
@@ -68,6 +66,21 @@ const User_Profile_Posts = () => {
     if (success) {
       setUserChats(response?.data?.data);
       setMessagesLoaded(true);
+    }
+  };
+
+  const handleGetConvserion = async () => {
+    if (conversionId) return;
+    const { success, response, status } =
+      await user_get_or_create_conversion(TargetUserId);
+
+    if (status === 401) {
+      localStorage.removeItem("token");
+      navigate("/login");
+    }
+
+    if (success) {
+      setConversionId(response?.data?.conversationId);
     }
   };
 
@@ -93,29 +106,30 @@ const User_Profile_Posts = () => {
             </h2>
 
             {/* Stats */}
+
             <div className="flex justify-center md:justify-start gap-6 mt-5">
               {/* Posts */}
-              <div className="flex flex-col items-center bg-white rounded-3xl px-6 py-4 shadow-md hover:shadow-xl hover:scale-105 transition-transform transition-shadow duration-300 w-28">
+              <div className="flex flex-col items-center bg-white rounded-3xl px-6 py-4 shadow-[0_4px_15px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.22)] hover:scale-105 transition-all duration-300 w-28">
                 <span className="font-bold text-xl">
                   {userPostsProfile?.totalPosts || 0}
                 </span>
                 <span className="text-gray-500 text-sm mt-1">Posts</span>
               </div>
 
-              {/* Likes */}
-              <div className="flex flex-col items-center bg-white rounded-3xl px-6 py-4 shadow-md hover:shadow-xl hover:scale-105 transition-transform transition-shadow duration-300 w-28">
+              {/* Following */}
+            <div className="flex flex-col items-center bg-white rounded-3xl px-6 py-4 shadow-[0_4px_15px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.22)] hover:scale-105 transition-all duration-300 w-28">
                 <span className="font-bold text-xl">
-                  {userPostsProfile?.totalLikes || 0}
+                  {userPostsProfile?.following || 0}
                 </span>
-                <span className="text-gray-500 text-sm mt-1">Likes</span>
+                <span className="text-gray-500 text-sm mt-1">Following</span>
               </div>
 
-              {/* Connections */}
-              <div className="flex flex-col items-center bg-white rounded-3xl px-6 py-4 shadow-md hover:shadow-xl hover:scale-105 transition-transform transition-shadow duration-300 w-28">
+              {/* Followers */}
+             <div className="flex flex-col items-center bg-white rounded-3xl px-6 py-4 shadow-[0_4px_15px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.22)] hover:scale-105 transition-all duration-300 w-28">
                 <span className="font-bold text-xl">
-                  {userPostsProfile?.totalFriends || 0}
+                  {userPostsProfile?.followers || 0}
                 </span>
-                <span className="text-gray-500 text-sm mt-1">Connections</span>
+                <span className="text-gray-500 text-sm mt-1">Followers</span>
               </div>
             </div>
 
@@ -123,33 +137,31 @@ const User_Profile_Posts = () => {
             <p className="mt-5 text-gray-700 text-sm max-w-md">
               {userPostsProfile?.bio || "This user hasn't added a bio yet."}
             </p>
-
             {/* Action Buttons */}
             <div className="mt-6 flex justify-center md:justify-start gap-2">
               {/* Follow Button */}
-              <Follow_button post_userId={userPostsProfile._id} />
+              <Follow_button target_userId={TargetUserId} />
 
               {/* Message Button */}
 
               <button
                 className={`px-6 py-2 text-sm font-medium border transition-colors duration-200 cursor-pointer
     ${
-      UserInfo._id !== userPostsProfile._id
+      UserInfo._id !== TargetUserId
         ? "bg-white border-gray-500 text-gray-700 rounded-full"
         : "bg-white border-gray-500 text-gray-700 hover:bg-yellow-500 hover:text-white w-50 rounded-lg hover:border-none"
     }`}
                 onClick={() => {
-                  if (UserInfo._id !== userPostsProfile._id) {
-                    handleGetAllMessage(); // async function
+                  if (UserInfo._id !== TargetUserId) {
+                    handleGetConvserion();
+                    handleGetAllMessage();
                     setIsLiveChatOpen(true);
                   } else {
                     EditProfileRoute();
                   }
                 }}
               >
-                {UserInfo._id !== userPostsProfile._id
-                  ? "Message"
-                  : "Edit Profile"}
+                {UserInfo._id !== TargetUserId ? "Message" : "Edit Profile"}
               </button>
             </div>
           </div>
@@ -180,7 +192,13 @@ const User_Profile_Posts = () => {
       {liveChatOpen && (
         <Livechat_modal
           onclose={setIsLiveChatOpen}
-          receiverId={userPostsProfile._id}
+          receiverId={TargetUserId}
+          conversionId={conversionId}
+          receiverProfile={{
+            image: userPostsProfile.image,
+            firstname: userPostsProfile.firstname,
+            lastname: userPostsProfile.lastname,
+          }}
         />
       )}
     </>

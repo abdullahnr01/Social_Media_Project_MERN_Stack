@@ -19,7 +19,7 @@ export const get_user_login_info = async () => {
     );
 
     toast.success(response.data?.message);
-    console.log(response?.data)
+    // console.log(response?.data)
     return { success: true, response: response, status: response.status };
   } catch (err) {
     console.error(`Login info error ${err}`);

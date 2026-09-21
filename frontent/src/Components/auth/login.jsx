@@ -113,8 +113,8 @@ function Login() {
       {/* Right Section (25%) */}
       <div className="w-[40%] flex items-center justify-center bg-white shadow-lg">
         <div className="w-full max-w-[410px] p-8 border border-gray-300 rounded-lg shadow-[0_0_20px_rgba(0,0,0,0.15)]">
-          <h2 className="text-[#fbba00] text-2xl font-semibold text-center mb-6">
-            Login SocialFirst
+          <h2 className="text-[#fbba00] text-2xl font-bold text-center mb-6">
+            SocialFirst
           </h2>
 
           <Formik

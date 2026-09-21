@@ -12,14 +12,14 @@ import Home from "../Components/Home";
 import Login from "../Components/auth/login";
 import SignUp from "../Components/auth/signup";
 import Navbar from "../Components/navbar";
-import EditProfile from "../Components/UserProfile/edit_profile";
+import EditProfile from "../Pages/edit_profile";
 import EditPost from "../Components/Posts/Post_CRUD/edit_posts";
 import User_Profile_Posts from "../Components/Posts/UserProfilePosts/user_profile_posts";
 
 //
 import ProtectedRoute from "../Protected Route/protected";
 import PublicRoute from "../Protected Route/public_route";
-import Livechat_modal from "../Components/Posts/UserProfilePosts/Modal/livechat_modal";
+
 //
 
 function AllRouters() {

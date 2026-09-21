@@ -31,6 +31,33 @@ export const get_all_message_API = async (targetuserId) => {
   }
 };
 
+export const user_get_or_create_conversion = async (targetUserId) => {
+  try {
+    const Usertoken = localStorage.getItem("token");
+    const response = await axios.get(
+      `${API_Url}/user_live/user_all_conversion/${targetUserId}`,
+
+      {
+        headers: { Authorization: `Bearer ${Usertoken}` },
+      },
+    );
+    toast.success(response.data?.message);
+    return { success: true, response: response, status: response.status };
+  } catch (err) {
+    console.error(`User Get All Message Error ${err}`);
+    if (err.response) {
+      toast.error(err.response.data?.message);
+      return {
+        success: false,
+        status: err.response.status,
+        response: err.response,
+      };
+    }
+
+    toast.error("Network error: Please check your internet connection.");
+  }
+};
+
 export const user_live_chat_Post_API = async (receiverId, message) => {
   try {
     const Usertoken = localStorage.getItem("token");

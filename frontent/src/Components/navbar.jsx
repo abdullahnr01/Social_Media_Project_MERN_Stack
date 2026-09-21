@@ -63,7 +63,7 @@ const Navbar = () => {
   //
   const handleGetAllNotification = async (targetId) => {
     const { success, response, status } = await get_user_notification(targetId);
-    // console.log(response?.data)
+    console.log(response?.data)
     if (success) {
       const data = response?.data?.data;
       setRequest(data);

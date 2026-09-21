@@ -81,6 +81,7 @@ export const get_user_Profile_OR_Posts_API = async (id) => {
       },
     );
     toast.success(response.data?.message);
+    // console.log(response?.data?.data)
     return { success: true, response: response, status: response.status };
   } catch (err) {
     console.error(`User Profile with Posts data error ${err}`);

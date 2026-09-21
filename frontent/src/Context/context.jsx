@@ -13,6 +13,7 @@ export const UserContextProvider = ({ children }) => {
   const [AllPosts, setAllPosts] = useState([]);
   const [userPostsProfile, setUserPostsProfile] = useState({});
   const [UserInfo, setUserInfo] = useState({});
+  const [followStatus, setFollowStatus] = useState({});
   const [singlePost_data, setSinglePost_data] = useState({});
   const [userChats, setUserChats] = useState([]);
   //
@@ -29,6 +30,8 @@ export const UserContextProvider = ({ children }) => {
       setUserInfo(response?.data?.data);
     }
   };
+
+  //
 
   //  JSX ------------------------------------------
 
@@ -49,6 +52,8 @@ export const UserContextProvider = ({ children }) => {
         setUserPostsProfile,
         userChats,
         setUserChats,
+        followStatus,
+        setFollowStatus,
         //
         setAllPostsAgain,
         AllPostsAgain,

@@ -1,73 +1,126 @@
 import React from "react";
 import { useState, useEffect, useContext } from "react";
 
-import io from "socket.io-client";
-const socket = io("http://localhost:9090");
-import FollowActionModal from "../../../Modal/withdraw_req_modal";
+import socket from "../../Socket/socket_io";
+import FollowActionModal from "../../../Modal/follow_action_modal";
 
+import { UserContext } from "../../../Context/context";
+//  API , Import Files ---------------------
 import {
   user_follow_click,
   withdrawFollow,
   unfollowUser,
 } from "../../../API layer/user_follow_api";
-import { UserContext } from "../../../Context/context";
 
-const Follow_button = ({ post_userId }) => {
-  const [followStatus, setFollowStatus] = useState({});
+const Follow_button = ({ target_userId }) => {
+  console.log(target_userId);
+
   //
   const [iswithdrawModalOpen, setIswithdrawModalOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [selectedStatus, setSelectedStatus] = useState("");
+  const [selectedPerspective, setSelectPerspective] = useState("");
 
-  const { AllPosts, userPostsProfile, UserInfo } = useContext(UserContext);
+  const {
+    AllPosts,
+    userPostsProfile,
+    UserInfo,
+    followStatus,
+    setFollowStatus,
+  } = useContext(UserContext);
+
+  console.log(userPostsProfile);
+
+  // UserLogin Id ---------------
+  const UserLoginId = UserInfo._id;
+
+  // Post Follow Button live socket useeffect
 
   useEffect(() => {
-    const handleFollowUpdate = ({ targetId, loginUserId, follow_Status }) => {
+    if (!socket || !UserLoginId) {
+      return;
+    }
+
+    const handleRequestReceived = ({ from, status }) => {
+      // console.log("RECEIVED:", from, status);
       setFollowStatus((prev) => ({
         ...prev,
+        [from]: status,
+      }));
+    };
 
-        // Update both sides
-        [targetId]: follow_Status,
-        [loginUserId]: follow_Status,
+    const handleRequestSent = ({ to, status }) => {
+      // console.log("SENT:", to, status);
+
+      setFollowStatus((prev) => ({
+        ...prev,
+        [to]: status,
+      }));
+    };
+
+    socket.on("followRequestReceived", handleRequestReceived);
+    socket.on("followRequestSent", handleRequestSent);
+
+    return () => {
+      socket.off("followRequestReceived", handleRequestReceived);
+      socket.off("followRequestSent", handleRequestSent);
+    };
+  }, [UserLoginId]);
+
+  // Responsed follow using live socket useeffect
+
+  useEffect(() => {
+    const handleFollowUpdate = ({ userId, follow_Status }) => {
+      console.log("Follow Updated:", userId, follow_Status);
+
+      setFollowStatus((prev) => ({
+        ...prev,
+        [userId]: follow_Status,
       }));
     };
 
     socket.on("followStatusUpdated", handleFollowUpdate);
 
-    return () => socket.off("followStatusUpdated", handleFollowUpdate);
-  }, []);
-
-  useEffect(() => {
-    socket.on("followRequestReceived", (data) => {
-      setFollowStatus((prev) => ({
-        ...prev,
-        [data.from]: data.status, // "Requested"
-      }));
-    });
-
-    // Cleanup listener on unmount
     return () => {
-      socket.off("followRequestReceived");
+      socket.off("followStatusUpdated", handleFollowUpdate);
     };
   }, []);
 
+  // withdraw follow using live socket useeffect
+
   useEffect(() => {
-    const handleFollowUpdate = ({
-      targetUserId,
-      loginUserId,
-      follow_Status,
-    }) => {
+    const handleWithdrawUpdate = ({ userId, follow_Status }) => {
+      console.log("Follow Updated:", userId, follow_Status);
+
       setFollowStatus((prev) => ({
         ...prev,
-        [targetUserId]: follow_Status,
-        [loginUserId]: follow_Status,
+        [userId]: follow_Status,
       }));
     };
 
-    socket.on("UnfollowStatusUpdate", handleFollowUpdate);
+    socket.on("WithdrawStatusUpdated", handleWithdrawUpdate);
 
     return () => {
-      socket.off("UnfollowStatusUpdate", handleFollowUpdate);
+      socket.off("WithdrawStatusUpdated", handleWithdrawUpdate);
+    };
+  }, []);
+
+  // Unfollow using live socket useeffect
+
+  useEffect(() => {
+    const handleUnfollowUpdate = ({ userId, follow_Status }) => {
+      console.log("Follow Updated:", userId, follow_Status);
+
+      setFollowStatus((prev) => ({
+        ...prev,
+        [userId]: follow_Status,
+      }));
+    };
+
+    socket.on("UnfollowStatusUpdated", handleUnfollowUpdate);
+
+    return () => {
+      socket.off("UnfollowStatusUpdated", handleUnfollowUpdate);
     };
   }, []);
 
@@ -76,86 +129,92 @@ const Follow_button = ({ post_userId }) => {
   }, [followStatus]);
 
   useEffect(() => {
-    const map = {};
-    if (AllPosts?.length > 0) {
-      AllPosts.forEach((post) => {
-        map[post.user_id] = post.followStatus || "Follow";
-      });
-    }
+    setFollowStatus((prev) => {
+      const updated = { ...prev };
 
-    if (userPostsProfile?.posts?.length > 0) {
-      userPostsProfile.posts.forEach((post) => {
-        map[post.user_id] = post.followStatus || "Follow";
-      });
-    }
-    if (userPostsProfile?._id) {
-      map[userPostsProfile._id] = userPostsProfile.followStatus || "Follow";
-    }
+      if (AllPosts?.length > 0) {
+        AllPosts.forEach((post) => {
+          updated[post.user_id] = post.followStatus || "Follow";
+        });
+      }
 
-    setFollowStatus(map);
+      if (userPostsProfile?.posts?.length > 0) {
+        userPostsProfile.posts.forEach((post) => {
+          updated[post.user_id] = post.followStatus || "Follow";
+        });
+      }
+
+      if (userPostsProfile?._id) {
+        updated[userPostsProfile._id] =
+          userPostsProfile.followStatus || "Follow";
+      }
+
+      return updated;
+    });
   }, [AllPosts, userPostsProfile]);
 
+  // Send Follow Request Function ------------
   const handlePostFollowReq = async (targetUserId) => {
-    const currentStatus = followStatus[targetUserId];
+    const currentStatus =
+      followStatus[targetUserId] || followStatus[UserLoginId];
 
-    if (currentStatus === "Pending..." || currentStatus === "Following") {
+    console.log(currentStatus);
+    console.log(followStatus[UserLoginId]);
+
+    if (currentStatus === "Request") {
       setSelectedUserId(targetUserId);
       setSelectedStatus(currentStatus);
       setIswithdrawModalOpen(true);
       return;
     }
 
+    if (currentStatus === "Pending..." || currentStatus === "Following") {
+      let perspective;
+      if (currentStatus === "Following") {
+        perspective =
+          followStatus[UserLoginId] === "Following"
+            ? "loginUser"
+            : "targetUser";
+      }
+
+      console.log(perspective);
+
+      setSelectedUserId(targetUserId);
+      setSelectedStatus(currentStatus);
+      setSelectPerspective(perspective);
+      setIswithdrawModalOpen(true);
+      return;
+    }
+
     const { success, response } = await user_follow_click(targetUserId);
 
-    if (success) {
-      setFollowStatus((prev) => ({
-        ...prev,
-        [targetUserId]: response.data.value,
-      }));
-    }
+    // if (success) {
+    //   setFollowStatus((prev) => ({
+    //     ...prev,
+    //     [targetUserId]: response.data.value,
+    //   }));
+    // }
   };
 
   return (
     <>
       <div>
-        {UserInfo?._id !== post_userId && (
+        {UserLoginId !== target_userId && (
           <button
             className="px-6 py-2 bg-[#fbba00] text-white text-sm font-medium rounded-full hover:bg-[#e0a800] transition-colors duration-200 cursor-pointer"
-            onClick={() => handlePostFollowReq(post_userId)}
+            onClick={() => handlePostFollowReq(target_userId)}
           >
-            {followStatus[post_userId]}
+            {followStatus[target_userId] || "Follow"}
           </button>
         )}
       </div>
 
       {iswithdrawModalOpen && (
         <FollowActionModal
+          targetId={selectedUserId}
           status={selectedStatus}
+          perspective={selectedPerspective}
           onClose={() => setIswithdrawModalOpen(false)}
-          onConfirm={async () => {
-            if (selectedStatus === "Pending...") {
-              const { success, response, status } =
-                await withdrawFollow(selectedUserId);
-              if (success) {
-                setFollowStatus((prev) => ({
-                  ...prev,
-                  [selectedUserId]: response?.data.value,
-                }));
-              }
-            } else if (selectedStatus === "Following") {
-              const { success, response, status } =
-                await unfollowUser(selectedUserId);
-
-              if (success) {
-                setFollowStatus((prev) => ({
-                  ...prev,
-                  [selectedUserId]: response?.data.value,
-                }));
-              }
-            }
-
-            setIswithdrawModalOpen(false);
-          }}
         />
       )}
     </>

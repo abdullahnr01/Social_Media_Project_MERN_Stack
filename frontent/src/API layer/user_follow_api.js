@@ -32,6 +32,8 @@ export const getAllFollowStatus = async () => {
   }
 };
 
+
+//  followUserController ---------------
 export const user_follow_click = async (targetUserId) => {
   try {
     const Usertoken = localStorage.getItem("token");

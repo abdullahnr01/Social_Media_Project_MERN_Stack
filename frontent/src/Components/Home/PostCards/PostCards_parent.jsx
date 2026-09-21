@@ -8,12 +8,15 @@ import User_like_Btn from "./user_like";
 import User_Share_Btn from "./user_share_btn";
 
 function PostCards({ post, index }) {
+
+  console.log(post)
+
   return (
     <>
       <User_menu_button post={post} index={index} />
       <div className="flex items-start justify-between mb-2 pt-5 px-5 bg-white ">
         <User_menu_info post={post} />
-        <Follow_button post_userId={post.user_id} />
+        <Follow_button target_userId={post.user_id} />
       </div>
 
       <Main_Media post={post} />

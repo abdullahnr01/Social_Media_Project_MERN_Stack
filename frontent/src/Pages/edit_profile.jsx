@@ -4,11 +4,9 @@ import { Formik, Field, ErrorMessage } from "formik";
 import { useNavigate } from "react-router-dom";
 import * as Yup from "yup";
 import { FaUserCircle, FaTrashAlt } from "react-icons/fa";
-import { UserContext } from "../../Context/context";
+import { UserContext } from "../Context/context";
 
-import {
-  user_update_all_info,
-} from "../../API layer/api";
+import { user_update_all_info } from "../API layer/api";
 
 function EditProfile() {
   // States
@@ -37,6 +35,7 @@ function EditProfile() {
     date_of_birth: UserInfo?.date_of_birth
       ? new Date(UserInfo.date_of_birth).toISOString().split("T")[0]
       : "",
+    user_bio: UserInfo?.bio || "",
     gender: UserInfo?.gender || "",
     image: UserInfo?.image || null,
   };
@@ -66,6 +65,12 @@ function EditProfile() {
       .required("Email must be required")
       .email("Invalid email address")
       .matches(/@gmail\.com$/, "Only @gmail.com addresses are allowed"),
+
+    user_bio: Yup.string()
+      .trim()
+      .min(10, "Description must be at least 10 characters")
+      .max(250, "Description cannot be longer than 250 characters"),
+
     date_of_birth: Yup.date()
       .required("Date of Birth is required")
       .min(new Date(1900, 0, 1), "Date cannot be before Jan 1, 1900")
@@ -276,6 +281,30 @@ function EditProfile() {
                   name="email"
                   component="div"
                   className="text-sm text-red-500 mt-1"
+                />
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm text-gray-700 font-medium mb-1">
+                  Add Bio
+                </label>
+                <Field
+                  as="textarea"
+                  name="description"
+                  rows="4"
+                  placeholder="Write something..."
+                  onChange={(e) => {
+                    let value = e.target.value;
+                    if (value === " ") return;
+                    value = value.replace(/\s{2,}/g, " ");
+                    setFieldValue("description", value);
+                  }}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fbba00] outline-none resize-none"
+                />
+                <ErrorMessage
+                  name="description"
+                  component="div"
+                  className="text-red-500 text-sm mt-1"
                 />
               </div>
 
