@@ -7,8 +7,8 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useState, useContext, useEffect } from "react";
 
 // local
-import { UserContext } from "../../Context/context";
-import { user_login_in, GoogleCredential_Login_API } from "../../API layer/api";
+import { UserContext } from "../Context/context";
+import { user_login_in, GoogleCredential_Login_API } from "../API layer/api";
 
 // 473953610284-4e4ksvrtu7iurv7rqv7qu0oq3g9fted8.apps.googleusercontent.com
 

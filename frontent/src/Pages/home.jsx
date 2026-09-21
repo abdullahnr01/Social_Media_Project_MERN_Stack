@@ -22,7 +22,7 @@ import { format } from "timeago.js";
 import io from "socket.io-client";
 const socket = io("http://localhost:9090");
 
-import PostCards from "./Home/PostCards/PostCards_parent";
+import PostCards from "../Components/Post_CRUD/Post_basic";
 
 //
 function Home() {

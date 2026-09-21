@@ -1,7 +1,7 @@
 import React from "react";
 import { useState, useEffect, useContext } from "react";
 
-import socket from "../../Socket/socket_io";
+import socket from "../../../Socket/socket_io";
 import FollowActionModal from "../../../Modal/follow_action_modal";
 
 import { UserContext } from "../../../Context/context";

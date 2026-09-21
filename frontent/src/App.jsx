@@ -7,7 +7,7 @@ import { BrowserRouter } from "react-router-dom";
 // local
 import AllRouters from "./Routes/router";
 import { UserContextProvider } from "./Context/context";
-import SocketHandler from "./Components/Socket/socket_handler";
+import SocketHandler from "./Socket/socket_handler";
 
 function App() {
   return (

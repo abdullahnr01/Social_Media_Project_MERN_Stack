@@ -1,7 +1,7 @@
 import { useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { UserContext } from "../../../Context/context";
-import { user_post_API } from "../../../API layer/user_post_api";
+import { UserContext } from "../../Context/context";
+import { user_post_API } from "../../API layer/user_post_api";
 import PostBasic from "./Post_basic";
 
 function CreatePosts() {

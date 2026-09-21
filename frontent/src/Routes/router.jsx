@@ -7,18 +7,18 @@ import {
   Navigate,
 } from "react-router-dom";
 //
-import CreatePosts from "../Components/Posts/Post_CRUD/create_posts";
-import Home from "../Components/Home";
-import Login from "../Components/auth/login";
-import SignUp from "../Components/auth/signup";
-import Navbar from "../Components/navbar";
+import CreatePosts from "../Components/Post_CRUD/create_posts";
+import Home from "../Pages/home";
+import Login from "../Pages/login";
+import SignUp from "../Pages/signup";
+import Navbar from "../Components/Home/Navbar/navbar";
 import EditProfile from "../Pages/edit_profile";
-import EditPost from "../Components/Posts/Post_CRUD/edit_posts";
-import User_Profile_Posts from "../Components/Posts/UserProfilePosts/user_profile_posts";
+import EditPost from "../Components/Post_CRUD/edit_posts";
+import User_Profile_Posts from "../Components/User_Posts/user_profile_posts";
 
 //
-import ProtectedRoute from "../Protected Route/protected";
-import PublicRoute from "../Protected Route/public_route";
+import ProtectedRoute from "./Protected Route/protected";
+import PublicRoute from "./Protected Route/public_route";
 
 //
 
