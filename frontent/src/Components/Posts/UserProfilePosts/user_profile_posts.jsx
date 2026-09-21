@@ -135,7 +135,7 @@ const User_Profile_Posts = () => {
 
             {/* Bio */}
             <p className="mt-5 text-gray-700 text-sm max-w-md">
-              {userPostsProfile?.bio || "This user hasn't added a bio yet."}
+              {userPostsProfile?.user_bio || "This user hasn't added a bio yet."}
             </p>
             {/* Action Buttons */}
             <div className="mt-6 flex justify-center md:justify-start gap-2">
