@@ -37,7 +37,10 @@ module.exports.getUserInfoDataController = async (req, res) => {
 
 module.exports.UpdateUserInfoController = async (req, res) => {
   try {
-    const { firstname, lastname, date_of_birth, gender, image } = req.body;
+    const { firstname, lastname, user_bio , date_of_birth, gender, image } = req.body;
+
+    console.log("bio" ,user_bio)
+
     const User_Id = req.UserId;
 
     const ExistingUser = await UserSignUp.findById(User_Id);
@@ -51,8 +54,11 @@ module.exports.UpdateUserInfoController = async (req, res) => {
 
     if (firstname) UpdateField.firstname = firstname;
     if (lastname) UpdateField.lastname = lastname;
+    if (user_bio) UpdateField.user_bio = user_bio;
     if (date_of_birth) UpdateField.date_of_birth = date_of_birth;
     if (gender) UpdateField.gender = gender;
+
+    console.log(UpdateField)
 
     if (req.file) {
       const result = await new Promise((resolve, reject) => {

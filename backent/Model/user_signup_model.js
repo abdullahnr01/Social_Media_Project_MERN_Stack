@@ -5,6 +5,9 @@ const userSignUpSchema = new Schema(
     image: { type: String, default: null },
     firstname: { type: String, required: true },
     lastname: { type: String, required: true },
+    user_bio: {
+      type: String,
+    },
     date_of_birth: { type: Date, required: false },
     gender: {
       type: String,
