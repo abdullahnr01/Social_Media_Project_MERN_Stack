@@ -7,6 +7,7 @@ const cloudinary = require("../Cloudinary/CloudinaryConfig");
 const streamifier = require("streamifier");
 // Get -------------------------------------------
 
+// Edit Post Controller -------------------
 module.exports.getSinglePostController = async (req, res) => {
   const { id } = req.params;
   try {
@@ -44,6 +45,8 @@ module.exports.GetMyPostController = async (req, res) => {
   }
 };
 
+// main all Post controller
+
 module.exports.UsersAllPosts = async (req, res) => {
   try {
     const User_Id = new mongoose.Types.ObjectId(req.UserId); // Logged-in user id
@@ -64,13 +67,6 @@ module.exports.UsersAllPosts = async (req, res) => {
       { $unwind: "$userInfo" },
 
       {
-        $addFields: {
-          likeCount: { $size: "$likes" },
-          isLiked: { $in: [User_Id, "$likes"] },
-        },
-      },
-
-      {
         $lookup: {
           from: "userfollowers", // collection name of UserFollow model
           let: { postUserId: "$user_id" }, // post ka user
@@ -78,10 +74,19 @@ module.exports.UsersAllPosts = async (req, res) => {
             {
               $match: {
                 $expr: {
-                  $and: [
-                    { $eq: ["$targetuser", "$$postUserId"] }, // jo post ka user hai
-                    { $eq: ["$loginUser", User_Id] }, // logged-in user
-                    // { $eq: ["$isDeleted", false] }, // soft delete check
+                  $or: [
+                    {
+                      $and: [
+                        { $eq: ["$loginUser", User_Id] },
+                        { $eq: ["$targetuser", "$$postUserId"] },
+                      ],
+                    },
+                    {
+                      $and: [
+                        { $eq: ["$loginUser", "$$postUserId"] },
+                        { $eq: ["$targetuser", User_Id] },
+                      ],
+                    },
                   ],
                 },
               },
@@ -91,7 +96,14 @@ module.exports.UsersAllPosts = async (req, res) => {
         },
       },
 
-      // 5️⃣ Convert followStatus array → single string or default "Follow"
+      {
+        $addFields: {
+          likeCount: { $size: "$likes" },
+          isLiked: { $in: [User_Id, "$likes"] },
+        },
+      },
+
+      //  Convert followStatus array → single string or default "Follow"
       {
         $addFields: {
           followStatus: {
@@ -127,8 +139,58 @@ module.exports.UsersAllPosts = async (req, res) => {
           },
         },
       },
+
+      // {
+      //   $addFields: {
+      //     followStatus: {
+      //       $cond: [
+      //         { $gt: [{ $size: "$followStatus" }, 0] },
+      //         {
+      //           $let: {
+      //             vars: {
+      //               fs: { $arrayElemAt: ["$followStatus", 0] },
+      //             },
+      //             in: {
+      //               $switch: {
+      //                 branches: [
+      //                   {
+      //                     case: { $eq: ["$$fs.status", "accepted"] },
+      //                     then: "Following",
+      //                   },
+      //                   {
+      //                     case: {
+      //                       $and: [
+      //                         { $eq: ["$$fs.status", "Pending"] },
+      //                         { $eq: ["$$fs.loginUser", loginUserId] },
+      //                       ],
+      //                     },
+      //                     then: "Pending...",
+      //                   },
+      //                   {
+      //                     case: {
+      //                       $and: [
+      //                         { $eq: ["$$fs.status", "Pending"] },
+      //                         { $ne: ["$$fs.loginUser", loginUserId] },
+      //                       ],
+      //                     },
+      //                     then: "Request",
+      //                   },
+      //                 ],
+      //                 default: "Follow",
+      //               },
+      //             },
+      //           },
+      //         },
+      //         "Follow",
+      //       ],
+      //     },
+      //   },
+      // },
     ]);
 
+    console.log(` This is Response${AllPosts}`);
+
+    console.log(AllPosts)
     return res.status(200).json({ success: true, data: AllPosts });
   } catch (err) {
     console.error("Get all posts error:", err);
@@ -143,7 +205,7 @@ module.exports.UserProfileWithPosts = async (req, res) => {
     const { id } = req.params;
     const targetUserId = new mongoose.Types.ObjectId(id);
     const loginUserId = new mongoose.Types.ObjectId(req.UserId);
-  
+
     if (!id) {
       return res.status(400).json({
         success: false,
@@ -168,6 +230,32 @@ module.exports.UserProfileWithPosts = async (req, res) => {
       },
 
       // 3️⃣ Get Friends (only for count)
+      // {
+      //   $lookup: {
+      //     from: "userfollowers",
+      //     let: { userId: "$_id" },
+      //     pipeline: [
+      //       {
+      //         $match: {
+      //           $expr: {
+      //             $and: [
+      //               { $eq: ["$status", "accepted"] }, // ✅ Only accepted
+      //               {
+      //                 $or: [
+      //                   { $eq: ["$loginUser", "$$userId"] },
+      //                   { $eq: ["$targetuser", "$$userId"] },
+      //                 ],
+      //               },
+      //             ],
+      //           },
+      //         },
+      //       },
+      //     ],
+      //     as: "friends",
+      //   },
+      // },
+
+      // Get Following
       {
         $lookup: {
           from: "userfollowers",
@@ -177,19 +265,35 @@ module.exports.UserProfileWithPosts = async (req, res) => {
               $match: {
                 $expr: {
                   $and: [
-                    { $eq: ["$status", "accepted"] }, // ✅ Only accepted
-                    {
-                      $or: [
-                        { $eq: ["$loginUser", "$$userId"] },
-                        { $eq: ["$targetuser", "$$userId"] },
-                      ],
-                    },
+                    { $eq: ["$status", "accepted"] },
+                    { $eq: ["$loginUser", "$$userId"] },
                   ],
                 },
               },
             },
           ],
-          as: "friends",
+          as: "following",
+        },
+      },
+
+      //  Get Followers
+      {
+        $lookup: {
+          from: "userfollowers",
+          let: { userId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$status", "accepted"] },
+                    { $eq: ["$targetuser", "$$userId"] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "followers",
         },
       },
 
@@ -197,9 +301,11 @@ module.exports.UserProfileWithPosts = async (req, res) => {
       {
         $addFields: {
           totalPosts: { $size: "$posts" },
-          totalFriends: { $size: "$friends" },
+          following: { $size: "$following" },
 
-          // 🔥 Total Likes Count (sum of all posts likes length)
+          followers: { $size: "$followers" },
+
+          //  Total Likes Count (sum of all posts likes length)
           totalLikes: {
             $sum: {
               $map: {
@@ -222,9 +328,21 @@ module.exports.UserProfileWithPosts = async (req, res) => {
             {
               $match: {
                 $expr: {
-                  $and: [
-                    { $eq: ["$targetuser", "$$targetUserId"] }, // post owner
-                    { $eq: ["$loginUser", "$$loginUserId"] }, // logged-in user
+                  $or: [
+                    // Login user ne target ko follow kiya
+                    {
+                      $and: [
+                        { $eq: ["$loginUser", "$$loginUserId"] },
+                        { $eq: ["$targetuser", "$$targetUserId"] },
+                      ],
+                    },
+                    // Target user ne login user ko follow request bheji
+                    {
+                      $and: [
+                        { $eq: ["$loginUser", "$$targetUserId"] },
+                        { $eq: ["$targetuser", "$$loginUserId"] },
+                      ],
+                    },
                   ],
                 },
               },
@@ -234,37 +352,56 @@ module.exports.UserProfileWithPosts = async (req, res) => {
         },
       },
 
-      //  Follow Status Add
       {
         $addFields: {
           followStatus: {
-            $let: {
-              vars: {
-                status: { $arrayElemAt: ["$followStatus.status", 0] },
-              },
-              in: {
-                $switch: {
-                  branches: [
-                    {
-                      case: { $eq: ["$$status", "accepted"] },
-                      then: "Following",
+            $cond: [
+              { $gt: [{ $size: "$followStatus" }, 0] },
+              {
+                $let: {
+                  vars: {
+                    fs: { $arrayElemAt: ["$followStatus", 0] },
+                  },
+                  in: {
+                    $switch: {
+                      branches: [
+                        {
+                          case: { $eq: ["$$fs.status", "accepted"] },
+                          then: "Following",
+                        },
+                        {
+                          case: {
+                            $and: [
+                              { $eq: ["$$fs.status", "Pending"] },
+                              { $eq: ["$$fs.loginUser", loginUserId] },
+                            ],
+                          },
+                          then: "Pending...",
+                        },
+                        {
+                          case: {
+                            $and: [
+                              { $eq: ["$$fs.status", "Pending"] },
+                              { $ne: ["$$fs.loginUser", loginUserId] },
+                            ],
+                          },
+                          then: "Request",
+                        },
+                      ],
+                      default: "Follow",
                     },
-                    {
-                      case: { $eq: ["$$status", "Pending"] },
-                      then: "Pending...",
-                    },
-                  ],
-                  default: "Follow",
+                  },
                 },
               },
-            },
+              "Follow",
+            ],
           },
         },
       },
-      // 5️⃣ Hide friends array (since only count needed)
+
+      // Hide friends array (since only count needed)
       {
         $project: {
-          friends: 0,
           password: 0,
           createdAt: 0,
           googleId: 0,
@@ -272,6 +409,8 @@ module.exports.UserProfileWithPosts = async (req, res) => {
         },
       },
     ]);
+
+    console.log(result);
 
     if (!result || result.length === 0) {
       return res.status(404).json({
@@ -289,7 +428,7 @@ module.exports.UserProfileWithPosts = async (req, res) => {
   }
 };
 
-// Post ---------------------------------------
+// -------------Post Method ---------------------------------------
 
 module.exports.UserPostController = async (req, res) => {
   try {
@@ -436,3 +575,31 @@ module.exports.UserEditPostController = async (req, res) => {
 //     return res.status(500).json({ message: "Internal Server error." });
 //   }
 // };
+
+//  Follow Status Add
+// {
+//   $addFields: {
+//     followStatus: {
+//       $let: {
+//         vars: {
+//           status: { $arrayElemAt: ["$followStatus.status", 0] },
+//         },
+//         in: {
+//           $switch: {
+//             branches: [
+//               {
+//                 case: { $eq: ["$$status", "accepted"] },
+//                 then: "Following",
+//               },
+//               {
+//                 case: { $eq: ["$$status", "Pending"] },
+//                 then: "Pending...",
+//               },
+//             ],
+//             default: "Follow",
+//           },
+//         },
+//       },
+//     },
+//   },
+// },

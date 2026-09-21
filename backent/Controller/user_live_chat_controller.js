@@ -1,7 +1,30 @@
 const UserConversion = require("../Model/User_Live_Chat/user_conversion_model");
 const UserMessages = require("../Model/User_Live_Chat/user_messages_model");
 
-module.exports.user_gell_all_conversion = async (req, res) => {};
+// GET /conversation/:targetUserId
+module.exports.user_get_OR_create_conversion = async (req, res) => {
+  const senderId = req.UserId; // Logged-in user
+  const receiverId = req.params.targetUserId;
+
+  try {
+    let conversation = await UserConversion.findOne({
+      participants: { $all: [senderId, receiverId] },
+    });
+
+    if (!conversation) {
+      conversation = await UserConversion.create({
+        participants: [senderId, receiverId],
+        lastMessage: null,
+        unreadCount: 0,
+      });
+    }
+
+    return res.status(200).json({ conversationId: conversation._id });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 module.exports.user_get_all_message = async (req, res) => {
   try {
@@ -13,7 +36,11 @@ module.exports.user_get_all_message = async (req, res) => {
         { senderId: UserLoginId, receiverId: targetUserId },
         { senderId: targetUserId, receiverId: UserLoginId },
       ],
-    }).sort({ createdAt: 1 });
+    })
+      .populate("senderId", "image firstname lastname")
+      .populate("receiverId", "image firstname lastname")
+
+      .sort({ createdAt: 1 });
 
     return res.status(200).json({
       message: "Messages fetched successfully",
@@ -59,10 +86,13 @@ module.exports.user_live_chat_post = async (req, res) => {
       text,
     });
 
+    const io = req.app.get("io");
+    io.to(conversation._id.toString()).emit("receiveMessage", message);
+
     return res.status(200).json({
       success: true,
       message: "Message sent successfully",
-      data: message,
+      //   data: message,
     });
   } catch (err) {
     console.error("Live chat post error:", err);

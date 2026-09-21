@@ -4,6 +4,7 @@ const { Server } = require("socket.io");
 const cors = require("cors");
 const PORT = 9090;
 require("dotenv").config();
+const { handleSendMessage } = require("./Socket/user_live_chat_socket");
 
 //  Route path
 const connectDB = require("./database/db");
@@ -44,9 +45,17 @@ const io = new Server(server, {
 app.set("io", io);
 
 io.on("connection", (socket) => {
-  // console.log("A user connected", socket.id);
+  socket.on("joinUserRoom", (userId) => {
+    socket.join(userId);
+    console.log(`Joined user room ${userId}`);
+  });
 
+  socket.on("joinChatRoom", (conversationId) => {
+    socket.join(conversationId);
+
+    console.log(`Socket ${socket.id} joined room ${conversationId}`);
+  });
   socket.on("disconnect", () => {
-    // console.log("A user disconnected", socket.id);
+    console.log("User disconnected:", socket.id);
   });
 });

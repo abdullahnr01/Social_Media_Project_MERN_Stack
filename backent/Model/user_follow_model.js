@@ -15,7 +15,14 @@ const userFollowSchema = new Schema(
 
     status: {
       type: String,
-      enum: ["Pending", "accepted", "rejected", "Withdraw", "UnFollow"],
+      enum: [
+        "Pending",
+        "accepted",
+        "rejected",
+        "Withdraw",
+        "UnFollow",
+        "Removing",
+      ],
       default: "Pending...",
     },
 

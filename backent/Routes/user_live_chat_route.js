@@ -6,9 +6,9 @@ const UserLiveChatController = require("../Controller/user_live_chat_controller"
 const { auth_middleware } = require("../Middleware/user_middleware");
 
 router.get(
-  "/user_all_conversion",
+  "/user_all_conversion/:targetUserId",
   auth_middleware,
-  UserLiveChatController.user_gell_all_conversion,
+  UserLiveChatController.user_get_OR_create_conversion,
 );
 
 router.get(

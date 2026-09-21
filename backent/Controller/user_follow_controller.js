@@ -19,83 +19,36 @@ const UserFollow = require("../Model/user_follow_model");
 //   }
 // };
 
-// module.exports.followUserController = async (req, res) => {
-//   try {
-//     const loginUserId = req.UserId;
-//     const targetUserId = req.body.userId;
-
-//     // 1️⃣ Check if login user already sent request
-//     const sentRequest = await UserFollow.findOne({
-//       loginUser: loginUserId,
-//       targetuser: targetUserId,
-//       // isDeleted: false,
-//     });
-
-//     if (sentRequest && sentRequest.status === "Pending") {
-//       return res.json({
-//         status: "Pending",
-//       });
-//     }
-
-//     console.log(sentRequest);
-
-//     // 2️⃣ Check if target user sent request
-//     const receivedRequest = await UserFollow.findOne({
-//       loginUser: targetUserId,
-//       targetuser: loginUserId,
-//       // isDeleted: false,
-//     });
-
-//     if (receivedRequest && receivedRequest.status === "Pending") {
-//       return res.json({
-//         status: "Requested",
-//       });
-//     }
-
-//     console.log("ye b null hai" ,receivedRequest)
-
-//     // 3️⃣ If no relation exists → CREATE new follow request
-//     const newRequest = await UserFollow.create({
-//       loginUser: loginUserId,
-//       targetuser: targetUserId,
-//       status: "Pending",
-//     });
-
-//     console.log(newRequest)
-
-//     return res.status(200).json({
-//       message: "Follow request sent..",
-//       value: "Pending...",
-//       data: newRequest,
-//     });
-//   } catch (err) {
-//     console.error(`User following Error: ${err}`);
-//     return res.status(500).json({ message: "Internal Server error." });
-//   }
-// };
-
 module.exports.followUserController = async (req, res) => {
   try {
     const loginUserId = req.UserId;
     const targetUserId = req.body.userId;
 
-    const existingFollow = await UserFollow.findOne({
+    let existingFollow = await UserFollow.findOne({
       loginUser: loginUserId,
       targetuser: targetUserId,
     });
 
-    let updatedFollow;
+    if (!existingFollow) {
+      existingFollow = await UserFollow.findOne({
+        loginUser: targetUserId,
+        targetuser: loginUserId,
+      });
+    }
 
+    let updatedFollow;
 
     // follow request send krne wala
 
     if (existingFollow) {
-      updatedFollow = await UserFollow.findOneAndUpdate(
-        { loginUser: loginUserId, targetuser: targetUserId },
+      // Update the existing record directly
+      updatedFollow = await UserFollow.findByIdAndUpdate(
+        existingFollow._id,
         { status: "Pending", isDeleted: false },
         { new: true },
       );
     } else {
+      // Create a new follow request
       updatedFollow = await UserFollow.create({
         loginUser: loginUserId,
         targetuser: targetUserId,
@@ -106,21 +59,19 @@ module.exports.followUserController = async (req, res) => {
     const io = req.app.get("io");
     io.to(targetUserId.toString()).emit("followRequestReceived", {
       from: loginUserId,
-      status: "Requested",
+      status: "Request",
     });
 
-    // Optionally, send to login user → "Pending"
-    // io.to(loginUserId.toString()).emit("followRequestSent", {
-    //   to: targetUserId,
-    //   status: "Pending...",
-    // });
-
- // follow request send krne wala
+    // 2️⃣ Sender ko pending confirmation
+    io.to(loginUserId.toString()).emit("followRequestSent", {
+      to: targetUserId,
+      status: "Pending...",
+    });
 
     return res.status(200).json({
       message: "Follow request sent..",
-      value: "Pending...",
-      data: updatedFollow,
+      // value: "Pending...",
+      // data: updatedFollow,
     });
   } catch (err) {
     console.error(`User following Error: ${err}`);
@@ -133,7 +84,14 @@ module.exports.respondFollowController = async (req, res) => {
     const loginUserId = req.UserId;
     const { targetId, action } = req.body;
     const updated = await UserFollow.findOneAndUpdate(
-      { targetuser: loginUserId, loginUser: targetId },
+      {
+        $or: [
+          { targetuser: loginUserId, loginUser: targetId },
+          { targetuser: targetId, loginUser: loginUserId },
+        ],
+        status: "Pending",
+        isDeleted: false,
+      },
       {
         status: action,
         isDeleted: true,
@@ -155,18 +113,22 @@ module.exports.respondFollowController = async (req, res) => {
     }
 
     const io = req.app.get("io");
-    io.emit("followStatusUpdated", {
-      targetId,
-      loginUserId,
+    io.to(targetId.toString()).emit("followStatusUpdated", {
+      userId: loginUserId,
+      follow_Status: frontendStatus,
+    });
+
+    io.to(loginUserId.toString()).emit("followStatusUpdated", {
+      userId: targetId,
       follow_Status: frontendStatus,
     });
 
     return res.status(200).json({
       message: `Request ${action} successfully`,
-      response: {
-        ...updated.toObject(),
-        followStatus: frontendStatus, // frontend-friendly
-      },
+      // response: {
+      //   ...updated.toObject(),
+      //   followStatus: frontendStatus, // frontend-friendly
+      // },
     });
   } catch (err) {
     console.error(`Respond User following Error: ${err}`);
@@ -180,12 +142,21 @@ module.exports.withdrawFollowController = async (req, res) => {
     const targetUserId = req.body.userId;
 
     // Find the pending follow request
-    const existingFollow = await UserFollow.findOne({
+    let existingFollow = await UserFollow.findOne({
       loginUser: loginUserId,
       targetuser: targetUserId,
       status: "Pending",
-      isDeleted: false, // soft delete
+      isDeleted: false,
     });
+
+    if (!existingFollow) {
+      existingFollow = await UserFollow.findOne({
+        loginUser: targetUserId,
+        targetuser: loginUserId,
+        status: "Pending",
+        isDeleted: false,
+      });
+    }
 
     if (!existingFollow) {
       return res
@@ -197,6 +168,18 @@ module.exports.withdrawFollowController = async (req, res) => {
     existingFollow.isDeleted = true;
     existingFollow.status = "Withdraw";
     await existingFollow.save();
+
+    const io = req.app.get("io");
+    io.to(targetUserId.toString()).emit("WithdrawStatusUpdated", {
+      userId: loginUserId, // login user ne withdraw kiya
+      follow_Status: "Follow",
+    });
+
+    // Login user: button reset to "Follow"
+    io.to(loginUserId.toString()).emit("WithdrawStatusUpdated", {
+      userId: targetUserId, // target user pe bhi update
+      follow_Status: "Follow",
+    });
 
     return res.status(200).json({
       success: true,
@@ -216,12 +199,21 @@ module.exports.unfollowController = async (req, res) => {
     const loginUserId = req.UserId;
     const targetUserId = req.body.userId;
 
-    // Find the following relationship
-    const existingFollow = await UserFollow.findOne({
+    let existingFollow = await UserFollow.findOne({
       loginUser: loginUserId,
       targetuser: targetUserId,
       status: "accepted",
     });
+
+    let isSwap = false;
+    if (!existingFollow) {
+      existingFollow = await UserFollow.findOne({
+        loginUser: targetUserId,
+        targetuser: loginUserId,
+        status: "accepted",
+      });
+      if (existingFollow) isSwap = true;
+    }
 
     if (!existingFollow) {
       return res
@@ -230,21 +222,29 @@ module.exports.unfollowController = async (req, res) => {
     }
 
     // Soft delete
-    existingFollow.isDeleted = true;
-    existingFollow.status = "UnFollow";
-    await existingFollow.save();
+    if (!isSwap) {
+      existingFollow.isDeleted = true;
+      existingFollow.status = "UnFollow";
+      await existingFollow.save();
+    } else {
+      existingFollow.isDeleted = true;
+      existingFollow.status = "Removing";
+      await existingFollow.save();
+    }
 
     const io = req.app.get("io");
-    io.emit("UnfollowStatusUpdate", {
-      targetUserId,
-      loginUserId,
-      follow_Status: "Follow",
+    io.to(loginUserId.toString()).emit("UnfollowStatusUpdated", {
+      userId: targetUserId,
+      follow_Status: "Follow", // Login user perspective
     });
 
+    io.to(targetUserId.toString()).emit("UnfollowStatusUpdated", {
+      userId: loginUserId,
+      follow_Status: "Follow", // Target user perspective
+    });
     return res.status(200).json({
       success: true,
       message: "Unfollowed successfully",
-      value: "Follow",
     });
   } catch (err) {
     console.error("Unfollow Error:", err);
