@@ -23,6 +23,7 @@ function EditProfile() {
     if (UserInfo?.image) {
       setpreviewImage(UserInfo.image);
     }
+    console.log(UserInfo)
   }, [UserInfo]);
 
   const navigate = useNavigate();
@@ -35,7 +36,7 @@ function EditProfile() {
     date_of_birth: UserInfo?.date_of_birth
       ? new Date(UserInfo.date_of_birth).toISOString().split("T")[0]
       : "",
-    user_bio: UserInfo?.bio || "",
+    user_bio: UserInfo?.user_bio || "",
     gender: UserInfo?.gender || "",
     image: UserInfo?.image || null,
   };
@@ -114,6 +115,8 @@ function EditProfile() {
       formData.append("email", values.email);
       formData.append("date_of_birth", values.date_of_birth);
       formData.append("gender", values.gender);
+       formData.append("user_bio", values.user_bio);
+
 
       if (values.image instanceof File) {
         formData.append("image", values.image);
@@ -290,19 +293,19 @@ function EditProfile() {
                 </label>
                 <Field
                   as="textarea"
-                  name="description"
+                  name="user_bio"
                   rows="4"
                   placeholder="Write something..."
                   onChange={(e) => {
                     let value = e.target.value;
                     if (value === " ") return;
                     value = value.replace(/\s{2,}/g, " ");
-                    setFieldValue("description", value);
+                    setFieldValue("user_bio", value);
                   }}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fbba00] outline-none resize-none"
                 />
                 <ErrorMessage
-                  name="description"
+                  name="user_bio"
                   component="div"
                   className="text-red-500 text-sm mt-1"
                 />
