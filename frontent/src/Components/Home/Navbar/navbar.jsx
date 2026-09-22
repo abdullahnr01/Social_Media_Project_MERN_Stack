@@ -13,6 +13,8 @@ import { get_user_notification } from "../../../API layer/api";
 
 import { respond_user_follow_click } from "../../../API layer/user_follow_api";
 
+import SearchBar from "../../Search_bar/seach_bar";
+
 const Navbar = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [dropdownOpenTwo, setDropdownOpenTwo] = useState(false);
@@ -45,10 +47,7 @@ const Navbar = () => {
     };
   }, []);
 
-
-  useEffect(() => {
-
-  } , [])
+  useEffect(() => {}, []);
 
   // functions -------------------------
 
@@ -63,7 +62,7 @@ const Navbar = () => {
   //
   const handleGetAllNotification = async (targetId) => {
     const { success, response, status } = await get_user_notification(targetId);
-    console.log(response?.data)
+    console.log(response?.data);
     if (success) {
       const data = response?.data?.data;
       setRequest(data);
@@ -125,14 +124,16 @@ const Navbar = () => {
           {/* Right 50% */}
           <div className="flex w-1/2 items-center justify-center space-x-6">
             {/* Search Bar */}
-            <div className="relative max-w-lg flex-1">
+            {/* <div className="relative max-w-lg flex-1">
               <input
                 type="search"
                 placeholder="Search..."
                 className="w-full rounded-full px-4 py-2 pl-10 border border-white bg-white bg-opacity-20 text-black placeholder-black focus:outline-none focus:ring-2 focus:ring-white focus:border-white"
               />
               <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black opacity-80" />
-            </div>
+            </div> */}
+
+            <SearchBar />
 
             {/* Notification */}
             <FaBell

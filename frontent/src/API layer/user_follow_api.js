@@ -29,9 +29,9 @@ export const getAllFollowStatus = async () => {
     }
 
     toast.error("Network error: Please check your internet connection.");
+    return { success: false, message: "Network Error" };
   }
 };
-
 
 //  followUserController ---------------
 export const user_follow_click = async (targetUserId) => {
@@ -79,7 +79,7 @@ export const respond_user_follow_click = async (targetUserId, action) => {
       },
     );
 
-    console.log(response)
+    console.log(response);
 
     toast.success(response.data?.message);
     return { success: true, response: response, status: response.status };
@@ -94,7 +94,9 @@ export const respond_user_follow_click = async (targetUserId, action) => {
       };
     }
 
-    toast.error("Network error: Please check your internet connection...yaha masla hai");
+    toast.error(
+      "Network error: Please check your internet connection...yaha masla hai",
+    );
   }
 };
 
@@ -130,7 +132,7 @@ export const withdrawFollow = async (selectedUserId) => {
 };
 
 export const unfollowUser = async (selectedUserId) => {
-  console.log(`ider b dyan do ${selectedUserId}`)
+  console.log(`ider b dyan do ${selectedUserId}`);
   try {
     const Usertoken = localStorage.getItem("token");
     const response = await axios.patch(
