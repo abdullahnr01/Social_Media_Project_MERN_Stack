@@ -24,7 +24,7 @@ module.exports.UserSearchController = async (req, res) => {
         { lastname: { $regex: searchRegex } },
       ],
     })
-      .select("firstname lastname image")
+      .select("firstname lastname image _id")
       .limit(10)
       .lean();
 
