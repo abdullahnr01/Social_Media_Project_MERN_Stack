@@ -7,7 +7,7 @@ const UserSearch_Controller = require("../Controller/user_search_controller");
 
 router.get(
   "/search",
-  auth_middleware,
+  // auth_middleware,
   UserSearch_Controller.UserSearchController,
 );
 

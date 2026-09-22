@@ -3,8 +3,8 @@ const { Schema, model } = require("mongoose");
 const userSignUpSchema = new Schema(
   {
     image: { type: String, default: null },
-    firstname: { type: String, required: true },
-    lastname: { type: String, required: true },
+    firstname: { type: String, required: true, trim: true },
+    lastname: { type: String, required: true, trim: true },
     user_bio: {
       type: String,
     },
@@ -26,6 +26,11 @@ const userSignUpSchema = new Schema(
   },
   { timestamps: true },
 );
+
+userSignUpSchema.index({
+  firstname: 1,
+  lastname: 1,
+});
 
 const UserSignUp = model("UserSignUp", userSignUpSchema);
 
