@@ -4,8 +4,8 @@ import io from "socket.io-client";
 const socket = io("http://localhost:9090");
 
 //
-import { user_live_chat_Post_API } from "../../../../../API layer/user_live_chat_api";
-import { UserContext } from "../../../../../Context/context";
+import { user_live_chat_Post_API } from "../API layer/user_live_chat_api";
+import { UserContext } from "../Context/context";
 
 //
 const Livechat_modal = ({

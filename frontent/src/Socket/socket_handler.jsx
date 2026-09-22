@@ -1,5 +1,5 @@
 import { useContext, useEffect } from "react";
-import { UserContext } from "../../Context/context";
+import { UserContext } from "../Context/context";
 import socket from "../Socket/socket_io"
 
 function SocketHandler() {

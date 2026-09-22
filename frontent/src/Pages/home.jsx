@@ -22,18 +22,14 @@ import { format } from "timeago.js";
 import io from "socket.io-client";
 const socket = io("http://localhost:9090");
 
-import PostCards from "./Home/PostCards/PostCards_parent";
+import PostCards from "../Components/Home/PostCards/PostCards_parent";
 
 //
 function Home() {
   const { UserInfo, setSinglePost_data, AllPosts, setAllPosts } =
     useContext(UserContext);
   // states
-  // const [AllPosts, setAllPosts] = useState([]);
-
-  // console.log(AllPosts);
-
-  //
+ 
 
   //
   const [AllCommentGets, setAllCommentGets] = useState({});
@@ -50,25 +46,7 @@ function Home() {
     fetchData();
   }, []);
 
-  // like useeffect
-  // useEffect(() => {
-  //   socket.on("connect", () => {
-  //     console.log("Socket Connected", socket.id);
-  //   });
 
-  //   socket.on("likeUpdated", (data) => {
-  //     setAllPosts((prev) =>
-  //       prev.map((p) =>
-  //         p._id === data.postId ? { ...p, likeCount: data.likeCount } : p,
-  //       ),
-  //     );
-  //   });
-
-  //   return () => {
-  //     socket.off("likeUpdated");
-  //   };
-  // }, []);
-  // comment useeffect
   useEffect(() => {
     socket.on("newCommentAdded", (data) => {
       const postId = data?.comment?.postId;
@@ -95,48 +73,7 @@ function Home() {
     return () => socket.off("commentReplyAdded");
   });
 
-  // follow status useeffect
-  // useEffect(() => {
-  //   socket.on(
-  //     "followStatusUpdated",
-  //     ({ targetId, loginUserId, follow_Status }) => {
-  //       setFollowStatus((prev) => ({
-  //         ...prev,
-  //         [loginUserId]: { status: follow_Status },
-  //       }));
-  //     },
-  //   );
-  //   return () => socket.off("followStatusUpdated");
-  // }, []);
-
-  // useEffect(() => {
-  //   socket.on("followStatusUpdated", ({ loginUserId, follow_Status }) => {
-  //     setFollowStatus((prev) => ({
-  //       ...prev,
-  //       [loginUserId]: follow_Status, // string only
-  //     }));
-  //   });
-
-  //   return () => socket.off("followStatusUpdated");
-  // }, []);
-
-  // useEffect(() => {
-  //   console.log("Updated followStatus:", followStatus);
-  // }, [followStatus]);
-
-  // useEffect(() => {
-  //   if (AllPosts.length > 0) {
-  //     const map = {};
-
-  //     AllPosts.forEach((post) => {
-  //       map[post.user_id] = post.followStatus || "Follow";
-  //     });
-
-  //     setFollowStatus(map);
-  //   }
-  // }, [AllPosts]);
-
-  // functions data fetch
+  
 
   const fetchData = async () => {
     const { success, response, status } = await all_data();
@@ -150,46 +87,7 @@ function Home() {
     setAllPosts(response?.data?.data || []);
   };
 
-  // function Edit post
-
-  // const handlePostEdit = (post) => {
-  //   console.log(post);
-  //   setSinglePost_data(post);
-  //   navigate(`/edit-post/${post._id}`);
-  // };
-
-  // functions delete post
-
-  // const deletedata = async (data) => {
-  //   const { success, status } = await delete_post_data(data);
-
-  //   if (status === 401) {
-  //     localStorage.removeItem("token");
-  //     navigate("/login");
-  //     return;
-  //   }
-  //   if (success) {
-  //     setAllPosts((prev) => prev.filter((p) => p._id !== data));
-  //   }
-  // };
-
-  // function like post
-
-  // const handlePostLikes = async (data) => {
-  //   try {
-  //     const { success, response } = await user_post_likes(data);
-  //     if (!success) return;
-
-  //     const resdata = response?.data;
-  //     const colordata = resdata?.isLiked;
-
-  //     setAllPosts((prev) =>
-  //       prev.map((p) => (p._id === data ? { ...p, isLiked: colordata } : p)),
-  //     );
-  //   } catch (err) {
-  //     console.error("Like error:", err);
-  //   }
-  // };
+ 
 
   // Comment Section ----------------
 
@@ -284,66 +182,7 @@ function Home() {
     }
   };
 
-  //  Handle follow
-
-  // const handlePostFollowReq = async (targetUserId) => {
-  //   console.log(targetUserId);
-
-  //   const currentStatus = followStatus[targetUserId]?.status;
-
-  //   console.log(`current status , ${currentStatus}`);
-
-  //   if (currentStatus === "Pending..." || currentStatus === "Following") {
-  //     setSelectedUserId(targetUserId); // kaunsa user
-  //     setSelectedStatus(currentStatus); // uska status
-  //     setIswithdrawModalOpen(true); // modal open
-
-  //     return;
-  //   }
-  //   const { success, response } = await user_follow_click(targetUserId);
-
-  //   console.log(response.data.follow.status);
-
-  //   if (success) {
-  //     setFollowStatus((prev) => ({
-  //       ...prev,
-  //       [targetUserId]: response.data.follow.status,
-  //       // [targetUserId]: { status: response.data.follow.status },
-  //     }));
-  //   }
-  //   console.log(followStatus);
-  // };
-
-  // const handlePostFollowReq = async (targetUserId) => {
-  //   const currentStatus = followStatus[targetUserId];
-
-  //   if (currentStatus === "Pending..." || currentStatus === "Following") {
-  //     setSelectedUserId(targetUserId);
-  //     setSelectedStatus(currentStatus);
-  //     setIswithdrawModalOpen(true);
-  //     return;
-  //   }
-
-  //   const { success, response } = await user_follow_click(targetUserId);
-
-  //   console.log(response?.data.value);
-
-  //   if (success) {
-  //     setFollowStatus((prev) => ({
-  //       ...prev,
-  //       [targetUserId]: response.data.value,
-  //     }));
-  //   }
-  // };
-
-  // const handleAllGetFollowStatus = async () => {
-  //   const { success, response } = await getAllFollowStatus();
-  // };
-
-  // useEffect(() => {
-  //   handleAllGetFollowStatus();
-  // }, []);
-  // ------------------------------
+ 
 
   return (
     <>
@@ -354,42 +193,7 @@ function Home() {
               key={index}
               className="relative bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300"
             >
-              {/* 3 Dots Menu  section-----1 */}
-
-              {/* {UserInfo._id === post.user_id && (
-                <div className="absolute top-4 right-4">
-                  <button
-                    onClick={() =>
-                      setMenuOpen(menuOpen === index ? null : index)
-                    }
-                    className="p-2 rounded-full hover:bg-gray-100 text-gray-600 transition-colors"
-                  >
-                    <FaEllipsisV />
-                  </button>
-
-                  {menuOpen === index && (
-                    <div className="absolute right-0 mt-2 w-36 bg-white border rounded-lg shadow-lg z-10 overflow-hidden">
-                      <button
-                        className="w-full px-4 py-2 text-left hover:bg-gray-100"
-                        onClick={() => {
-                          handlePostEdit(post);
-                        }}
-                      >
-                        ✏️ Edit
-                      </button>
-                      <button
-                        className="w-full px-4 py-2 text-left text-red-500 hover:bg-gray-100"
-                        onClick={() => {
-                          deletedata(post._id);
-                          setMenuOpen(null);
-                        }}
-                      >
-                        🗑️ Delete
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )} */}
+             
               {/* Profile Image + Post Image   section----2 */}
 
               <PostCards post={post} index={index} />
@@ -397,19 +201,7 @@ function Home() {
               {/* Like , comment , share  section----3 */}
               <div className="flex justify-around items-center pt-3 text-gray-600 pb-5 ">
                 {/* Like */}
-                {/* <button className="flex flex-col items-center group">
-                  <div className="flex items-center gap-2 group-hover:text-red-500 transition-colors">
-                    <FaHeart
-                      className={`text-lg cursor-pointer ${
-                        post.isLiked ? "text-red-500" : "text-gray-500"
-                      }`}
-                      onClick={() => handlePostLikes(post._id)}
-                    />
-                  </div>
-                  <span className="text-xs text-gray-400 mt-1">
-                    {post.likeCount} Likes
-                  </span>
-                </button> */}
+              
 
                 {/* Comment */}
                 <button
@@ -430,12 +222,7 @@ function Home() {
                 </button>
 
                 {/* Share */}
-                {/* <button className="flex flex-col items-center group">
-                  <div className="flex items-center gap-2  group-hover:text-[#fbba00] transition-colors">
-                    <FaShare className="text-lg" />
-                  </div>
-                  <span className="text-xs text-gray-400 mt-1">Shares</span>
-                </button> */}
+              
               </div>
 
               {/* Comment Input field    section----4  */}
@@ -682,38 +469,9 @@ function Home() {
         </div>
       </div>
 
-      {/* ---------------Modal ----------------- */}
+      
 
-      {/* {iswithdrawModalOpen && (
-        <FollowActionModal
-          status={selectedStatus}
-          onClose={() => setIswithdrawModalOpen(false)}
-          onConfirm={async () => {
-            if (selectedStatus === "Pending...") {
-              const { success, response, status } =
-                await withdrawFollow(selectedUserId);
-              if (success) {
-                setFollowStatus((prev) => ({
-                  ...prev,
-                  [selectedUserId]: response?.data.value,
-                }));
-              }
-            } else if (selectedStatus === "Following") {
-              const { success, response, status } =
-                await unfollowUser(selectedUserId);
-
-              if (success) {
-                setFollowStatus((prev) => ({
-                  ...prev,
-                  [selectedUserId]: response?.data.value,
-                }));
-              }
-            }
-
-            setIswithdrawModalOpen(false);
-          }}
-        />
-      )} */}
+    
     </>
   );
 }

@@ -1,10 +1,10 @@
 import { useContext, useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { UserContext } from "../../../Context/context";
+import { UserContext } from "../../Context/context";
 import {
   user_edit_post_API,
   get_single_post_API,
-} from "../../../API layer/user_post_api";
+} from "../../API layer/user_post_api";
 import PostBasic from "./Post_basic";
 
 function EditPost() {
