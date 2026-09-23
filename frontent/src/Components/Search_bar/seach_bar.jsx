@@ -48,6 +48,10 @@ function SearchBar() {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
+  const HandleGoToUserProfile = (id) => {
+    navigate(`/user_profile_posts?id=${id}`);
+  };
+
   return (
     <>
       <div ref={searchRef} className="relative max-w-lg flex-1">
@@ -98,7 +102,8 @@ function SearchBar() {
                   key={user._id}
                   onClick={() => {
                     setIsOpen(false);
-                    // Navigation ya Profile click handler yahan lagayein
+                    HandleGoToUserProfile(user._id);
+                    setSearchTerm("")
                   }}
                   className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-100 last:border-none"
                 >
