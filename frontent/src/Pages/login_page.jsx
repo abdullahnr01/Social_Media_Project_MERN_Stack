@@ -14,7 +14,7 @@ import { user_login_in, GoogleCredential_Login_API } from "../API layer/api";
 
 function Login() {
   // Global States
-  const { credentials, setCredentials, UserInfofetch } =
+  const { credentials, setCredentials } =
     useContext(UserContext);
 
   // Local States

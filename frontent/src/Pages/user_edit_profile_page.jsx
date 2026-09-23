@@ -14,7 +14,6 @@ function EditProfile() {
     UserInfo,
     setUserInfo,
     //function
-    UserInfofetch,
   } = useContext(UserContext);
 
   const [previewImage, setpreviewImage] = useState(null);

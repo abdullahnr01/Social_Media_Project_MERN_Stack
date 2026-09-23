@@ -4,11 +4,11 @@
 // import { UserContext } from "../Context/context";
 // function MyPost() {
 //   const {
-//     UserInfo,
+
 //     profileImage,
 //     // functions
 //     fetchProfileImage,
-//     UserInfofetch,
+
 //   } = useContext(UserContext);
 
 //   const [totalPosts, settotalPost] = useState("");
