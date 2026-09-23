@@ -5,7 +5,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import { UserContext } from "../Context/context";
 import Follow_button from "../Components/Home/PostCards/user_follow_button";
-import Livechat_modal from "../Modal/livechat_modal";
+import Chat_Messaging_Modal from "../Modal/Messaging_Chat/chat_messaging_modal";
 
 // API
 import { get_user_Profile_OR_Posts_API } from "../API layer/user_post_api";
@@ -190,7 +190,7 @@ const User_Profile_Posts = () => {
       </div>
 
       {liveChatOpen && (
-        <Livechat_modal
+        <Chat_Messaging_Modal
           onclose={setIsLiveChatOpen}
           receiverId={TargetUserId}
           conversionId={conversionId}

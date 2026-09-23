@@ -16,6 +16,8 @@ import {
   get_all_message_API,
   mark_read_conversation_patch_API,
 } from "../API layer/user_live_chat_api";
+import { ChatHeader } from "../Modal/Messaging_Chat/Chat_header";
+import { ChatMessageList } from "../Modal/Messaging_Chat/Chat_Message_Container/chat_message_list";
 
 function UserAllMessaging() {
   const { UserInfo } = useContext(UserContext);
@@ -57,10 +59,9 @@ function UserAllMessaging() {
 
           return {
             id: chat._id, // ye conversion docs ki id hai
-            name:
-              `${opponent.firstname || ""} ${opponent.lastname || ""}`.trim() ||
-              "User",
-            avatar: opponent.image || "https://via.placeholder.com/120",
+            firstname: opponent?.firstname?.trim() || "User",
+            lastname: opponent?.lastname?.trim() || "",
+            image: opponent.image || "https://via.placeholder.com/120",
             lastMessage: chat.lastMessage?.text || "No messages yet",
             time: messageTime,
             unread: chat.unreadCount || 0,
@@ -93,7 +94,7 @@ function UserAllMessaging() {
 
     setConversations((prev) => {
       const updated = [...prev];
-      const index = updated.findIndex((c) => c.id === chat.id); 
+      const index = updated.findIndex((c) => c.id === chat.id);
 
       if (index !== -1) {
         updated[index] = { ...updated[index], unread: 0 };
@@ -182,10 +183,9 @@ function UserAllMessaging() {
                     : ""
                 }`}
               >
-                {/* Avatar with Online Badge */}
                 <div className="relative flex-shrink-0">
                   <img
-                    src={chat.avatar}
+                    src={chat.image}
                     alt={chat.name}
                     className="w-12 h-12 rounded-full object-cover"
                   />
@@ -198,7 +198,8 @@ function UserAllMessaging() {
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-baseline mb-1">
                     <h3 className="text-sm font-semibold text-slate-800 truncate">
-                      {chat.name}
+                      {`${chat.firstname || ""} ${chat.lastname || ""}`.trim() ||
+                        "User"}
                     </h3>
                     <span className="text-xs text-slate-400">{chat.time}</span>
                   </div>
@@ -222,27 +223,8 @@ function UserAllMessaging() {
         {activeChat ? (
           <div className="hidden md:flex flex-1 flex-col bg-white">
             {/* Active Chat Header */}
-            <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-white/80 backdrop-blur">
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <img
-                    src={activeChat.avatar}
-                    alt={activeChat.name}
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
-                  {activeChat.online && (
-                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"></span>
-                  )}
-                </div>
-                <div>
-                  <h2 className="text-sm font-semibold text-slate-800">
-                    {activeChat.name}
-                  </h2>
-                  <p className="text-xs text-slate-400">
-                    {activeChat.online ? "Active now" : "Offline"}
-                  </p>
-                </div>
-              </div>
+            <div className="p-3 border-b border-slate-200 flex justify-between items-center bg-white/80 backdrop-blur">
+              <ChatHeader user={activeChat} />
 
               {/* Action Buttons */}
               <div className="flex items-center gap-1 text-slate-600">
@@ -258,28 +240,11 @@ function UserAllMessaging() {
               </div>
             </div>
 
-            {/* Message Area */}
-            <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-50/30">
-              {messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`flex flex-col ${msg.sender === "me" ? "items-end" : "items-start"}`}
-                >
-                  <div
-                    className={`max-w-[70%] px-4 py-2.5 rounded-2xl text-sm ${
-                      msg.sender === "me"
-                        ? "bg-[#fbba00] text-white rounded-br-none shadow-sm"
-                        : "bg-slate-200 text-slate-800 rounded-bl-none"
-                    }`}
-                  >
-                    {msg.text}
-                  </div>
-                  <span className="text-[10px] text-slate-400 mt-1 px-1">
-                    {msg.time}
-                  </span>
-                </div>
-              ))}
-            </div>
+            <ChatMessageList
+              messages={messages}
+              UserLoginId={UserLoginId}
+              size="lg"
+            />
 
             {/* Input Bar */}
             <form

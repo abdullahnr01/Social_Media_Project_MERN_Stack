@@ -14,7 +14,7 @@ import SignUp from "../Pages/signup_page";
 import Navbar from "../Components/Home/Navbar/navbar";
 import EditProfile from "../Pages/user_edit_profile_page";
 import EditPost from "../Components/Post_CRUD/edit_posts";
-import User_Profile_Posts from "../Pages/user_my_profile_page";
+import User_Posts_Profile from "../Pages/user_posts_profile_page"
 
 //
 import ProtectedRoute from "./Protected Route/protected";
@@ -53,7 +53,7 @@ function AllRouters() {
             <Route path="/edit-post/:id" element={<EditPost />} />
             <Route
               path="/user_profile_posts"
-              element={<User_Profile_Posts />}
+              element={<User_Posts_Profile />}
             />
             <Route path="/messaging" element={<UserAllMessaging/>} />
           </Route>
