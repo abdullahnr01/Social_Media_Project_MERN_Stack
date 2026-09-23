@@ -50,22 +50,52 @@ module.exports.get_user_all_conversations = async (req, res) => {
   }
 };
 
+// module.exports.user_get_all_message = async (req, res) => {
+
+//   try {
+//     const UserLoginId = req.UserId;
+//     const { targetUserId } = req.query;
+
+//     const messages = await UserMessages.find({
+//       $or: [
+//         { senderId: UserLoginId, receiverId: targetUserId },
+//         { senderId: targetUserId, receiverId: UserLoginId },
+//       ],
+//     })
+//       .populate("senderId", "image firstname lastname")
+//       .populate("receiverId", "image firstname lastname")
+
+//       .sort({ createdAt: 1 });
+
+//     return res.status(200).json({
+//       message: "Messages fetched successfully",
+//       data: messages,
+//     });
+//   } catch (err) {
+//     console.error("User get all message error:", err);
+//     return res.status(500).json({ message: "Internal server error" });
+//   }
+// };
+
 module.exports.user_get_all_message = async (req, res) => {
-  
   try {
     const UserLoginId = req.UserId;
     const { targetUserId } = req.query;
 
+    if (!targetUserId) {
+      return res.status(400).json({ message: "targetUserId is required" });
+    }
+
+    // Direct Database Fetch - Populate completely removed
     const messages = await UserMessages.find({
       $or: [
         { senderId: UserLoginId, receiverId: targetUserId },
         { senderId: targetUserId, receiverId: UserLoginId },
       ],
     })
-      .populate("senderId", "image firstname lastname")
-      .populate("receiverId", "image firstname lastname")
-
-      .sort({ createdAt: 1 });
+      .select("senderId receiverId text createdAt") 
+      .sort({ createdAt: 1 })
+      .lean(); 
 
     return res.status(200).json({
       message: "Messages fetched successfully",
@@ -81,9 +111,10 @@ module.exports.mark_as_read = async (req, res) => {
   try {
     const { conversationId } = req.params;
 
-
     if (!conversationId || conversationId === "undefined") {
-      return res.status(400).json({ message: "Valid conversationId is required" });
+      return res
+        .status(400)
+        .json({ message: "Valid conversationId is required" });
     }
 
     await UserConversion.findByIdAndUpdate(conversationId, {
