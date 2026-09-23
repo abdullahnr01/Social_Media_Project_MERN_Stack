@@ -6,6 +6,8 @@ module.exports.user_get_OR_create_conversion = async (req, res) => {
   const senderId = req.UserId; // Logged-in user
   const receiverId = req.params.targetUserId;
 
+  console.log("ye chala hai");
+
   try {
     let conversation = await UserConversion.findOne({
       participants: { $all: [senderId, receiverId] },
@@ -26,7 +28,30 @@ module.exports.user_get_OR_create_conversion = async (req, res) => {
   }
 };
 
+module.exports.get_user_all_conversations = async (req, res) => {
+  try {
+    const loggedInUserId = req.UserId;
+    const conversations = await UserConversion.find({
+      participants: loggedInUserId,
+    })
+      .populate({
+        path: "participants",
+        select: "firstname lastname image isOnline lastSeen",
+      })
+      .sort({ updatedAt: -1 }); // Latest chat sabse upar aayegi
+
+    return res.status(200).json({
+      message: "Conversations fetched successfully",
+      data: conversations,
+    });
+  } catch (err) {
+    console.error("Get user conversations error:", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 module.exports.user_get_all_message = async (req, res) => {
+  
   try {
     const UserLoginId = req.UserId;
     const { targetUserId } = req.query;
@@ -48,6 +73,26 @@ module.exports.user_get_all_message = async (req, res) => {
     });
   } catch (err) {
     console.error("User get all message error:", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+module.exports.mark_as_read = async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+
+
+    if (!conversationId || conversationId === "undefined") {
+      return res.status(400).json({ message: "Valid conversationId is required" });
+    }
+
+    await UserConversion.findByIdAndUpdate(conversationId, {
+      unreadCount: 0,
+    });
+
+    return res.status(200).json({ success: true, message: "Marked as read" });
+  } catch (err) {
+    console.error("Mark as read error:", err);
     return res.status(500).json({ message: "Internal server error" });
   }
 };

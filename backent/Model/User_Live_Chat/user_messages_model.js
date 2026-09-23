@@ -18,7 +18,7 @@ const UserMessageSchema = new mongoose.Schema(
       default: null,
       //   required: true,
     },
-    text: { type: String, trim: true, require: true },
+    text: { type: String, trim: true, required: true },
   },
   { timestamps: true },
 );
@@ -26,6 +26,17 @@ const UserMessageSchema = new mongoose.Schema(
 UserMessageSchema.index({ conversationId: 1, createdAt: 1 });
 
 module.exports = mongoose.model("UserAllMessage", UserMessageSchema);
+
+
+
+
+
+
+
+
+
+
+
 
 //   messageType: {
 //     type: String,

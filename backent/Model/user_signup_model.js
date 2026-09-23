@@ -23,6 +23,15 @@ const userSignUpSchema = new Schema(
     },
     googleId: { type: String, default: null },
     authProvider: { type: String, enum: ["local", "google"], default: "local" },
+
+    isOnline: {
+      type: Boolean,
+      default: false,
+    },
+    lastSeen: {
+      type: Date,
+      default: Date.now,
+    },
   },
   { timestamps: true },
 );
