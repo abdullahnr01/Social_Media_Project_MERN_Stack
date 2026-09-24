@@ -3,16 +3,16 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 //  local
 
-import { UserContext } from "../../Context/context";
-import Follow_button from "../Home/PostCards/user_follow_button";
-import Livechat_modal from "../../Modal/livechat_modal";
+import { UserContext } from "../Context/context";
+import Follow_button from "../Components/Home/PostCards/user_follow_button";
+import Chat_Messaging_Modal from "../Modal/Messaging_Chat/chat_messaging_modal";
 
 // API
-import { get_user_Profile_OR_Posts_API } from "../../API layer/user_post_api";
+import { get_user_Profile_OR_Posts_API } from "../API layer/user_post_api";
 import {
   get_all_message_API,
   user_get_or_create_conversion,
-} from "../../API layer/user_live_chat_api";
+} from "../API layer/user_live_chat_api";
 
 //-----------------------function Component---------------
 const User_Profile_Posts = () => {
@@ -190,7 +190,7 @@ const User_Profile_Posts = () => {
       </div>
 
       {liveChatOpen && (
-        <Livechat_modal
+        <Chat_Messaging_Modal
           onclose={setIsLiveChatOpen}
           receiverId={TargetUserId}
           conversionId={conversionId}

@@ -8,17 +8,18 @@ import {
 } from "react-router-dom";
 //
 import CreatePosts from "../Components/Post_CRUD/create_posts";
-import Home from "../Pages/home";
-import Login from "../Pages/login";
-import SignUp from "../Pages/signup";
+import Home from "../Pages/home_page";
+import Login from "../Pages/login_page";
+import SignUp from "../Pages/signup_page";
 import Navbar from "../Components/Home/Navbar/navbar";
-import EditProfile from "../Pages/edit_profile";
+import EditProfile from "../Pages/user_edit_profile_page";
 import EditPost from "../Components/Post_CRUD/edit_posts";
-import User_Profile_Posts from "../Components/User_Posts/user_profile_posts";
+import User_Posts_Profile from "../Pages/user_posts_profile_page"
 
 //
 import ProtectedRoute from "./Protected Route/protected";
 import PublicRoute from "./Protected Route/public_route";
+import UserAllMessaging from "../Pages/user_messaging_page";
 
 //
 
@@ -52,8 +53,9 @@ function AllRouters() {
             <Route path="/edit-post/:id" element={<EditPost />} />
             <Route
               path="/user_profile_posts"
-              element={<User_Profile_Posts />}
+              element={<User_Posts_Profile />}
             />
+            <Route path="/messaging" element={<UserAllMessaging/>} />
           </Route>
           <Route path="*" element={<Navigate to="/home" replace />} />
 

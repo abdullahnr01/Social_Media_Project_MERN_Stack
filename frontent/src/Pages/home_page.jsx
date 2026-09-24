@@ -26,7 +26,7 @@ import PostCards from "../Components/Home/PostCards/PostCards_parent";
 
 //
 function Home() {
-  const { UserInfo, setSinglePost_data, AllPosts, setAllPosts } =
+  const { setSinglePost_data, AllPosts, setAllPosts } =
     useContext(UserContext);
   // states
  
