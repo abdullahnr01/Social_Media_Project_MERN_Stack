@@ -15,7 +15,7 @@ export const UserContextProvider = ({ children }) => {
   const [UserInfo, setUserInfo] = useState({});
   const [followStatus, setFollowStatus] = useState({});
   const [singlePost_data, setSinglePost_data] = useState({});
-  const [userChats, setUserChats] = useState([]);
+
   //
 
   const [AllPostsAgain, setAllPostsAgain] = useState(false);
@@ -50,8 +50,7 @@ export const UserContextProvider = ({ children }) => {
         setSinglePost_data,
         userPostsProfile,
         setUserPostsProfile,
-        userChats,
-        setUserChats,
+
         followStatus,
         setFollowStatus,
         //

@@ -5,13 +5,13 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import { UserContext } from "../Context/context";
 import Follow_button from "../Components/Home/PostCards/user_follow_button";
-import Chat_Messaging_Modal from "../Modal/Messaging_Chat/chat_messaging_modal";
+import Chat_Messaging_Modal from "../Modal/Chat_Box/chat_modal_parent";
 
 // API
 import { get_user_Profile_OR_Posts_API } from "../API layer/user_post_api";
 import {
   get_all_message_API,
-  user_get_or_create_conversion,
+  user_get_or_create_conversion_API,
 } from "../API layer/user_live_chat_api";
 
 //-----------------------function Component---------------
@@ -23,13 +23,15 @@ const User_Profile_Posts = () => {
   const TargetUserId = queryParams.get("id");
 
   //
-  const { userPostsProfile, setUserPostsProfile, UserInfo, setUserChats } =
+  const { userPostsProfile, setUserPostsProfile, UserInfo } =
     useContext(UserContext);
+
+ const [userChats, setUserChats] = useState([]);
 
   //
   const [liveChatOpen, setIsLiveChatOpen] = useState(false);
   const [messagesLoaded, setMessagesLoaded] = useState(false);
-  const [conversionId, setConversionId] = useState("");
+  // const [conversionId, setConversionId] = useState("");
 
   // useEffect(() => {
   //   console.log(userPostsProfile);
@@ -69,20 +71,20 @@ const User_Profile_Posts = () => {
     }
   };
 
-  const handleGetConvserion = async () => {
-    if (conversionId) return;
-    const { success, response, status } =
-      await user_get_or_create_conversion(TargetUserId);
+  // const handleGetConvserion = async () => {
+  //   if (conversionId) return;
+  //   const { success, response, status } =
+  //     await user_get_or_create_conversion_API(TargetUserId);
 
-    if (status === 401) {
-      localStorage.removeItem("token");
-      navigate("/login");
-    }
+  //   if (status === 401) {
+  //     localStorage.removeItem("token");
+  //     navigate("/login");
+  //   }
 
-    if (success) {
-      setConversionId(response?.data?.conversationId);
-    }
-  };
+  //   if (success) {
+  //     setConversionId(response?.data?.conversationId);
+  //   }
+  // };
 
   return (
     <>
@@ -153,7 +155,7 @@ const User_Profile_Posts = () => {
     }`}
                 onClick={() => {
                   if (UserInfo._id !== TargetUserId) {
-                    handleGetConvserion();
+                    // handleGetConvserion();
                     handleGetAllMessage();
                     setIsLiveChatOpen(true);
                   } else {
@@ -193,7 +195,8 @@ const User_Profile_Posts = () => {
         <Chat_Messaging_Modal
           onclose={setIsLiveChatOpen}
           receiverId={TargetUserId}
-          conversionId={conversionId}
+          setUserChats={setUserChats}
+          userChats={userChats}
           receiverProfile={{
             image: userPostsProfile.image,
             firstname: userPostsProfile.firstname,
