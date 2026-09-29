@@ -2,22 +2,7 @@
 
 const UserFollow = require("../Model/user_follow_model");
 
-// module.exports.getFollowStatusController = async (req, res) => {
-//   try {
-//     const loginUserId = req.UserId;
-//     const followStatus = await UserFollow.find(
-//       { targetuser: loginUserId },
-//       "status",
-//     ).sort({ createdAt: -1 });
 
-//     return res.status(200).json({
-//       data: followStatus,
-//     });
-//   } catch (err) {
-//     console.error(err);
-//     return res.status(500).json({ message: "Internal Server error." });
-//   }
-// };
 
 module.exports.followUserController = async (req, res) => {
   try {

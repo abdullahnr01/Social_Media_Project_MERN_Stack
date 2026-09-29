@@ -149,6 +149,7 @@ module.exports.user_live_chat_post = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Message sent successfully",
+      data: message,
     });
   } catch (err) {
     console.error("Live chat post error:", err);
