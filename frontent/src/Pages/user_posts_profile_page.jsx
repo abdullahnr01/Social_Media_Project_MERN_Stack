@@ -26,7 +26,7 @@ const User_Profile_Posts = () => {
   const { userPostsProfile, setUserPostsProfile, UserInfo } =
     useContext(UserContext);
 
- const [userChats, setUserChats] = useState([]);
+  const [userChats, setUserChats] = useState([]);
 
   //
   const [liveChatOpen, setIsLiveChatOpen] = useState(false);
@@ -119,7 +119,7 @@ const User_Profile_Posts = () => {
               </div>
 
               {/* Following */}
-            <div className="flex flex-col items-center bg-white rounded-3xl px-6 py-4 shadow-[0_4px_15px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.22)] hover:scale-105 transition-all duration-300 w-28">
+              <div className="flex flex-col items-center bg-white rounded-3xl px-6 py-4 shadow-[0_4px_15px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.22)] hover:scale-105 transition-all duration-300 w-28">
                 <span className="font-bold text-xl">
                   {userPostsProfile?.following || 0}
                 </span>
@@ -127,7 +127,7 @@ const User_Profile_Posts = () => {
               </div>
 
               {/* Followers */}
-             <div className="flex flex-col items-center bg-white rounded-3xl px-6 py-4 shadow-[0_4px_15px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.22)] hover:scale-105 transition-all duration-300 w-28">
+              <div className="flex flex-col items-center bg-white rounded-3xl px-6 py-4 shadow-[0_4px_15px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.22)] hover:scale-105 transition-all duration-300 w-28">
                 <span className="font-bold text-xl">
                   {userPostsProfile?.followers || 0}
                 </span>
@@ -137,7 +137,8 @@ const User_Profile_Posts = () => {
 
             {/* Bio */}
             <p className="mt-5 text-gray-700 text-sm max-w-md">
-              {userPostsProfile?.user_bio || "This user hasn't added a bio yet."}
+              {userPostsProfile?.user_bio ||
+                "This user hasn't added a bio yet."}
             </p>
             {/* Action Buttons */}
             <div className="mt-6 flex justify-center md:justify-start gap-2">
@@ -201,6 +202,7 @@ const User_Profile_Posts = () => {
             image: userPostsProfile.image,
             firstname: userPostsProfile.firstname,
             lastname: userPostsProfile.lastname,
+            online: userPostsProfile.isOnline,
           }}
         />
       )}

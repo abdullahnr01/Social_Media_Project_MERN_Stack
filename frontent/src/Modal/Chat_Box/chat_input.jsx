@@ -10,7 +10,7 @@ const ChatInput = ({ message, setMessage, onSendMessage }) => {
   };
 
   return (
-    <div className="px-4 py-3 border-t border-gray-200 flex items-center gap-2 w-full">
+    <div className="px-4 py-5 border-t border-gray-200 flex items-center gap-2 w-full">
       <input
         type="text"
         placeholder="Type a message..."
