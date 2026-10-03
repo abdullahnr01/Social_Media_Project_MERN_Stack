@@ -133,15 +133,3 @@ function SearchBar() {
 
 export default SearchBar;
 
-{
-  /* <div className="relative max-w-lg flex-1">
-        <input
-          type="search"
-          placeholder="Search..."
-          className="w-full rounded-full px-4 py-2 pl-10 border border-white bg-white bg-opacity-20 text-black placeholder-black focus:outline-none focus:ring-2 focus:ring-white focus:border-white"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-        <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black opacity-80" />
-      </div> */
-}

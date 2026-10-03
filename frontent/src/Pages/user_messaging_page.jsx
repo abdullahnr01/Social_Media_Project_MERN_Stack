@@ -1,46 +1,68 @@
 import React, { useState, useEffect, useCallback, useContext } from "react";
-import {
-  Search,
-  Send,
-  MoreVertical,
-  Phone,
-  Video,
-  Image as ImageIcon,
-  Paperclip,
-  Smile,
-} from "lucide-react";
-
+import { Search, MoreVertical, Image as ImageIcon } from "lucide-react";
+import io from "socket.io-client";
+const socket = io("http://localhost:9090");
 import { UserContext } from "../Context/context";
+
+// API Import
+
 import {
   user_get_all_conversion_API,
   get_all_message_API,
   mark_read_conversation_patch_API,
+  user_live_chat_Post_API,
 } from "../API layer/user_live_chat_api";
-import { ChatHeader } from "../Modal/Messaging_Chat/Chat_header";
-import { ChatMessageList } from "../Modal/Messaging_Chat/Chat_Message_Container/chat_message_list";
+
+// Components Import
+import { Msg_Header } from "../Components/Messaging/Msg_Header/info_header";
+import { Action_Header } from "../Components/Messaging/Msg_Header/action_header";
+import { Msg_List } from "../Components/Messaging/Msg_Container/msg_list";
+import { Msg_Input } from "../Components/Messaging/Msg_Input_Bar/msg_input";
 
 function UserAllMessaging() {
   const { UserInfo } = useContext(UserContext);
 
-  const UserLoginId = UserInfo?._id;
-
+  // is state me saree users ki chat a rahi hai jo left side pr ati hai
   const [conversations, setConversations] = useState([]);
+  // specific chat k click krne pr us user ki info a rahi hai , name , online
   const [activeChat, setActiveChat] = useState(null);
-  const [messages, setMessages] = useState([]);
   const [markRead, setmarkRead] = useState("");
 
-  const [newMessage, setNewMessage] = useState("");
+  // specific chat k click krne pr us chat k msg is state me a rae hain
+  const [userChats, setUserChats] = useState([]);
+  const [messageInput, setMessageInput] = useState("");
+
+  const UserLoginId = UserInfo?._id;
+  const receiverId = activeChat?.opponentId; // ye tergetUser id hai
+
+  useEffect(() => {
+    console.log(activeChat);
+  }, [activeChat]);
 
   useEffect(() => {
     console.log(conversations);
   }, [conversations]);
+
+  useEffect(() => {
+    if (UserInfo?._id) {
+      socket.emit("joinUserRoom", UserInfo._id);
+
+      socket.on("receiveMessage", (incomingMessage) => {
+        setUserChats((prevMessages) => [...prevMessages, incomingMessage]);
+      });
+    }
+
+    return () => {
+      socket.off("receiveMessage");
+    };
+  }, [UserInfo?._id]);
 
   const FetchAllConversations = useCallback(async () => {
     if (!UserLoginId) return;
     try {
       const res = await user_get_all_conversion_API();
 
-      console.log(res.response?.data?.data);
+      // console.log(res.response?.data?.data);
 
       if (res.success && res.response?.data?.data) {
         // Raw backend data ko aapke UI state format mein map karna:
@@ -83,7 +105,7 @@ function UserAllMessaging() {
     FetchAllConversations();
   }, [FetchAllConversations]);
 
-  // Selected chat state
+  // ye us specific person ki info or chat la raha hai
 
   const handleSelectChat = async (chat) => {
     if (!chat) {
@@ -114,7 +136,7 @@ function UserAllMessaging() {
       }
 
       if (success) {
-        setMessages(response?.data?.data || []);
+        setUserChats(response?.data?.data || []);
       }
     }
 
@@ -124,22 +146,48 @@ function UserAllMessaging() {
   };
 
   // Handle message send
-  const handleSendMessage = (e) => {
-    e.preventDefault();
-    if (!newMessage.trim()) return;
+  const handleSendMessage = async () => {
+    if (!messageInput.trim() || !receiverId) return;
 
-    const newMsgObj = {
-      id: Date.now(),
-      sender: "me",
-      text: newMessage,
-      time: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
+    const currentText = messageInput;
+    setMessageInput("");
+
+    const tempId = `temp_${Date.now()}`;
+
+    const tempMessage = {
+      _id: tempId,
+      sender: UserLoginId,
+      receiver: receiverId,
+      text: currentText,
+      createdAt: new Date().toISOString(),
+      status: "sending",
     };
 
-    setMessages([...messages, newMsgObj]);
-    setNewMessage("");
+    setUserChats((prev) => [...prev, tempMessage]);
+
+    try {
+      const { success, response, status } = await user_live_chat_Post_API(
+        receiverId,
+        messageInput,
+      );
+
+      if (status === 401) {
+        localStorage.removeItem("token");
+        navigate("/login");
+      }
+
+      if (success && response?.data?.data) {
+        const real_db_Msg = response.data.data;
+        setUserChats((prev) =>
+          prev.map((m) => (m._id === tempId ? real_db_Msg : m)),
+        );
+      }
+    } catch (err) {
+      console.log(err);
+      setUserChats((prev) =>
+        prev.map((m) => (m._id === tempId ? { ...m, status: "failed" } : m)),
+      );
+    }
   };
 
   return (
@@ -221,76 +269,27 @@ function UserAllMessaging() {
 
         {/* ================= RIGHT SIDE: Active Chat Box ================= */}
         {activeChat ? (
-          <div className="hidden md:flex flex-1 flex-col bg-white">
-            {/* Active Chat Header */}
-            <div className="p-3 border-b border-slate-200 flex justify-between items-center bg-white/80 backdrop-blur">
-              <ChatHeader user={activeChat} />
-
-              {/* Action Buttons */}
-              <div className="flex items-center gap-1 text-slate-600">
-                <button className="p-2 hover:bg-slate-100 rounded-full transition">
-                  <Phone size={18} />
-                </button>
-                <button className="p-2 hover:bg-slate-100 rounded-full transition">
-                  <Video size={18} />
-                </button>
-                <button className="p-2 hover:bg-slate-100 rounded-full transition">
-                  <MoreVertical size={18} />
-                </button>
-              </div>
+          <div className="hidden md:flex flex-1 flex-col h-full overflow-hidden bg-white">
+            {/* Active Chat Header - Fixed Top */}
+            <div className="p-3 border-b border-slate-200 flex justify-between items-center bg-white/95 backdrop-blur-md z-10">
+              <Msg_Header user={activeChat} />
+              <Action_Header />
             </div>
 
-            <ChatMessageList
-              messages={messages}
-              UserLoginId={UserLoginId}
-              size="lg"
+            <Msg_List messages={userChats} UserLoginId={UserLoginId} />
+
+            <Msg_Input
+              message={messageInput}
+              setMessage={setMessageInput}
+              onSendMessage={handleSendMessage}
             />
-
-            {/* Input Bar */}
-            <form
-              onSubmit={handleSendMessage}
-              className="p-3 border-t border-slate-200 bg-white flex items-center gap-2"
-            >
-              <button
-                type="button"
-                className="p-2 text-slate-400 hover:text-slate-600 rounded-full transition"
-              >
-                <Paperclip size={20} />
-              </button>
-              <button
-                type="button"
-                className="p-2 text-slate-400 hover:text-slate-600 rounded-full transition"
-              >
-                <ImageIcon size={20} />
-              </button>
-
-              <input
-                type="text"
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Write a message..."
-                className="flex-1 py-2 px-4 bg-slate-100 text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition"
-              />
-
-              <button
-                type="button"
-                className="p-2 text-slate-400 hover:text-slate-600 rounded-full transition"
-              >
-                <Smile size={20} />
-              </button>
-
-              <button
-                type="submit"
-                className="p-2.5 bg-[#fbba00] hover:bg-blue-700 text-white rounded-full transition shadow-md shadow-blue-500/20 flex items-center justify-center"
-              >
-                <Send size={16} />
-              </button>
-            </form>
           </div>
         ) : (
-          /* Empty State if no chat selected */
-          <div className="hidden md:flex flex-1 items-center justify-center text-slate-400">
-            Select a conversation to start messaging
+          <div className="hidden md:flex flex-1 flex-col items-center justify-center bg-slate-50/50 text-slate-400 font-medium">
+            <div className="w-16 h-16 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex items-center justify-center mb-3 text-3xl">
+              ✉️
+            </div>
+            <p>Select a conversation to start messaging</p>
           </div>
         )}
       </div>

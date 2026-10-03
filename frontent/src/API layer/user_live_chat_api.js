@@ -31,7 +31,7 @@ export const get_all_message_API = async (targetuserId) => {
   }
 };
 
-export const user_get_or_create_conversion = async (targetUserId) => {
+export const user_get_or_create_conversion_API = async (targetUserId) => {
   try {
     const Usertoken = localStorage.getItem("token");
     const response = await axios.get(

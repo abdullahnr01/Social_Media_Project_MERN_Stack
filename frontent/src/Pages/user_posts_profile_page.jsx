@@ -5,13 +5,13 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import { UserContext } from "../Context/context";
 import Follow_button from "../Components/Home/PostCards/user_follow_button";
-import Chat_Messaging_Modal from "../Modal/Messaging_Chat/chat_messaging_modal";
+import Chat_Messaging_Modal from "../Modal/Chat_Box/chat_modal_parent";
 
 // API
 import { get_user_Profile_OR_Posts_API } from "../API layer/user_post_api";
 import {
   get_all_message_API,
-  user_get_or_create_conversion,
+  user_get_or_create_conversion_API,
 } from "../API layer/user_live_chat_api";
 
 //-----------------------function Component---------------
@@ -23,13 +23,15 @@ const User_Profile_Posts = () => {
   const TargetUserId = queryParams.get("id");
 
   //
-  const { userPostsProfile, setUserPostsProfile, UserInfo, setUserChats } =
+  const { userPostsProfile, setUserPostsProfile, UserInfo } =
     useContext(UserContext);
+
+  const [userChats, setUserChats] = useState([]);
 
   //
   const [liveChatOpen, setIsLiveChatOpen] = useState(false);
   const [messagesLoaded, setMessagesLoaded] = useState(false);
-  const [conversionId, setConversionId] = useState("");
+  // const [conversionId, setConversionId] = useState("");
 
   // useEffect(() => {
   //   console.log(userPostsProfile);
@@ -69,20 +71,20 @@ const User_Profile_Posts = () => {
     }
   };
 
-  const handleGetConvserion = async () => {
-    if (conversionId) return;
-    const { success, response, status } =
-      await user_get_or_create_conversion(TargetUserId);
+  // const handleGetConvserion = async () => {
+  //   if (conversionId) return;
+  //   const { success, response, status } =
+  //     await user_get_or_create_conversion_API(TargetUserId);
 
-    if (status === 401) {
-      localStorage.removeItem("token");
-      navigate("/login");
-    }
+  //   if (status === 401) {
+  //     localStorage.removeItem("token");
+  //     navigate("/login");
+  //   }
 
-    if (success) {
-      setConversionId(response?.data?.conversationId);
-    }
-  };
+  //   if (success) {
+  //     setConversionId(response?.data?.conversationId);
+  //   }
+  // };
 
   return (
     <>
@@ -117,7 +119,7 @@ const User_Profile_Posts = () => {
               </div>
 
               {/* Following */}
-            <div className="flex flex-col items-center bg-white rounded-3xl px-6 py-4 shadow-[0_4px_15px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.22)] hover:scale-105 transition-all duration-300 w-28">
+              <div className="flex flex-col items-center bg-white rounded-3xl px-6 py-4 shadow-[0_4px_15px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.22)] hover:scale-105 transition-all duration-300 w-28">
                 <span className="font-bold text-xl">
                   {userPostsProfile?.following || 0}
                 </span>
@@ -125,7 +127,7 @@ const User_Profile_Posts = () => {
               </div>
 
               {/* Followers */}
-             <div className="flex flex-col items-center bg-white rounded-3xl px-6 py-4 shadow-[0_4px_15px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.22)] hover:scale-105 transition-all duration-300 w-28">
+              <div className="flex flex-col items-center bg-white rounded-3xl px-6 py-4 shadow-[0_4px_15px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.22)] hover:scale-105 transition-all duration-300 w-28">
                 <span className="font-bold text-xl">
                   {userPostsProfile?.followers || 0}
                 </span>
@@ -135,7 +137,8 @@ const User_Profile_Posts = () => {
 
             {/* Bio */}
             <p className="mt-5 text-gray-700 text-sm max-w-md">
-              {userPostsProfile?.user_bio || "This user hasn't added a bio yet."}
+              {userPostsProfile?.user_bio ||
+                "This user hasn't added a bio yet."}
             </p>
             {/* Action Buttons */}
             <div className="mt-6 flex justify-center md:justify-start gap-2">
@@ -153,7 +156,7 @@ const User_Profile_Posts = () => {
     }`}
                 onClick={() => {
                   if (UserInfo._id !== TargetUserId) {
-                    handleGetConvserion();
+                    // handleGetConvserion();
                     handleGetAllMessage();
                     setIsLiveChatOpen(true);
                   } else {
@@ -193,11 +196,13 @@ const User_Profile_Posts = () => {
         <Chat_Messaging_Modal
           onclose={setIsLiveChatOpen}
           receiverId={TargetUserId}
-          conversionId={conversionId}
+          setUserChats={setUserChats}
+          userChats={userChats}
           receiverProfile={{
             image: userPostsProfile.image,
             firstname: userPostsProfile.firstname,
             lastname: userPostsProfile.lastname,
+            online: userPostsProfile.isOnline,
           }}
         />
       )}
