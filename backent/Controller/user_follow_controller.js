@@ -2,8 +2,6 @@
 
 const UserFollow = require("../Model/user_follow_model");
 
-
-
 module.exports.followUserController = async (req, res) => {
   try {
     const loginUserId = req.UserId;
@@ -23,7 +21,7 @@ module.exports.followUserController = async (req, res) => {
 
     let updatedFollow;
 
-    // follow request send krne wala
+  
 
     if (existingFollow) {
       // Update the existing record directly
@@ -134,25 +132,29 @@ module.exports.withdrawFollowController = async (req, res) => {
       isDeleted: false,
     });
 
+    // if (!existingFollow) {
+    //   existingFollow = await UserFollow.findOne({
+    //     loginUser: targetUserId,
+    //     targetuser: loginUserId,
+    //     status: "Pending",
+    //     isDeleted: false,
+    //   });
+    // }
+
     if (!existingFollow) {
-      existingFollow = await UserFollow.findOne({
-        loginUser: targetUserId,
-        targetuser: loginUserId,
-        status: "Pending",
-        isDeleted: false,
+      return res.status(404).json({
+        success: false,
+        message:
+          "Pending follow request not found or you are not authorized to withdraw.",
       });
     }
 
-    if (!existingFollow) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Pending follow request not found" });
-    }
-
     // Soft delete
-    existingFollow.isDeleted = true;
-    existingFollow.status = "Withdraw";
-    await existingFollow.save();
+    // existingFollow.isDeleted = true;
+    // existingFollow.status = "Withdraw";
+    // await existingFollow.save();
+
+    await UserFollow.findByIdAndDelete(existingFollow._id);
 
     const io = req.app.get("io");
     io.to(targetUserId.toString()).emit("WithdrawStatusUpdated", {
