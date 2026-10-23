@@ -22,6 +22,7 @@ const User_menu_info = ({ post }) => {
         <img
           src={post.userInfo.image}
           alt="Profile Image"
+          referrerPolicy="no-referrer"
           className="w-10 h-10 rounded-full object-cover border border-gray-200"
         />
       ) : (

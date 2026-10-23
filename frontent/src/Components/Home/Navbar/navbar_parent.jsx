@@ -32,6 +32,11 @@ const Navbar = () => {
     UserInfofetch();
   }, []);
 
+
+    useEffect(() => {
+      console.log(UserInfo)
+    } , [UserInfo])
+
   // functions -------------------------
 
   const respondFollowReq = async (targetId, action) => {

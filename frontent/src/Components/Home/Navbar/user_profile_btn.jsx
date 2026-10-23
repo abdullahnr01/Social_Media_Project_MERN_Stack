@@ -31,6 +31,10 @@ export const Nav_User_Profile_Btn = ({ UserInfo }) => {
     navigate("/login");
   };
 
+  useEffect(() => {
+    console.log(UserInfo);
+  }, [UserInfo]);
+
   return (
     <>
       <div className="relative" ref={dropdownRef}>
@@ -43,6 +47,7 @@ export const Nav_User_Profile_Btn = ({ UserInfo }) => {
             <img
               src={UserInfo.image}
               alt="Profile"
+              referrerPolicy="no-referrer"
               className="w-10 h-10 rounded-full cursor-pointer hover:opacity-90 transition"
             />
           ) : (

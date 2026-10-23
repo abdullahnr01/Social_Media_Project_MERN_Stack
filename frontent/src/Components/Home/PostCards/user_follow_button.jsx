@@ -13,7 +13,7 @@ import {
 } from "../../../API layer/user_follow_api";
 
 const Follow_button = ({ target_userId }) => {
-  console.log(target_userId);
+  // console.log(target_userId);
 
   //
   const [iswithdrawModalOpen, setIswithdrawModalOpen] = useState(false);
