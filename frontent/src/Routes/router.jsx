@@ -20,7 +20,7 @@ import User_Posts_Profile from "../Pages/user_posts_profile_page";
 import ProtectedRoute from "./Protected Route/protected";
 import PublicRoute from "./Protected Route/public_route";
 import UserAllMessaging from "../Pages/user_messaging_page";
-import { User_Notification } from "../Pages/user_notification";
+import { User_Notification } from "../Pages/user_notification_page";
 
 //
 

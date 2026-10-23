@@ -13,6 +13,7 @@ import {
   get_all_message_API,
   user_get_or_create_conversion_API,
 } from "../API layer/user_live_chat_api";
+import { FollowListModal } from "../Modal/follow_list_modal";
 
 //-----------------------function Component---------------
 const User_Profile_Posts = () => {
@@ -31,6 +32,16 @@ const User_Profile_Posts = () => {
   //
   const [liveChatOpen, setIsLiveChatOpen] = useState(false);
   const [messagesLoaded, setMessagesLoaded] = useState(false);
+
+  // ye follow or following list ka modal hai
+
+  
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalTab, setModalTab] = useState("followers");
+
+// -----------------------------------------------------------
+
+
   // const [conversionId, setConversionId] = useState("");
 
   // useEffect(() => {
@@ -119,7 +130,13 @@ const User_Profile_Posts = () => {
               </div>
 
               {/* Following */}
-              <div className="flex flex-col items-center bg-white rounded-3xl px-6 py-4 shadow-[0_4px_15px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.22)] hover:scale-105 transition-all duration-300 w-28">
+              <div
+                className="flex flex-col items-center bg-white rounded-3xl px-6 py-4 shadow-[0_4px_15px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.22)] hover:scale-105 transition-all duration-300 w-28"
+                onClick={() => {
+                  setModalTab("following");
+                  setIsModalOpen(true);
+                }}
+              >
                 <span className="font-bold text-xl">
                   {userPostsProfile?.following || 0}
                 </span>
@@ -127,7 +144,13 @@ const User_Profile_Posts = () => {
               </div>
 
               {/* Followers */}
-              <div className="flex flex-col items-center bg-white rounded-3xl px-6 py-4 shadow-[0_4px_15px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.22)] hover:scale-105 transition-all duration-300 w-28">
+              <div
+                className="flex flex-col items-center bg-white rounded-3xl px-6 py-4 shadow-[0_4px_15px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.22)] hover:scale-105 transition-all duration-300 w-28"
+                onClick={() => {
+                  setModalTab("followers");
+                  setIsModalOpen(true);
+                }}
+              >
                 <span className="font-bold text-xl">
                   {userPostsProfile?.followers || 0}
                 </span>
@@ -170,7 +193,7 @@ const User_Profile_Posts = () => {
           </div>
         </div>
 
-        {/* 🔥 User Posts Grid */}
+        {/* User Posts Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-8">
           {userPostsProfile?.posts?.map((post) => (
             <div
@@ -204,6 +227,14 @@ const User_Profile_Posts = () => {
             lastname: userPostsProfile.lastname,
             online: userPostsProfile.isOnline,
           }}
+        />
+      )}
+
+      {isModalOpen && (
+        <FollowListModal
+          userId={TargetUserId || UserInfo?._id}
+          initialTab={modalTab}
+          onClose={() => setIsModalOpen(false)}
         />
       )}
     </>

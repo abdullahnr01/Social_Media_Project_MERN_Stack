@@ -4,39 +4,7 @@ import { get_user_notification } from "../API layer/api";
 
 import { respond_user_follow_click } from "../API layer/user_follow_api";
 
-// Static dummy data — backend se bhi isi format mein aayega
-// const dummyRequests = [
-//   {
-//     _id: "1",
-//     createdAt: new Date().toISOString(),
-//     loginUser: {
-//       _id: "u1",
-//       firstname: "Ali",
-//       lastname: "Khan",
-//       image: "https://randomuser.me/api/portraits/men/32.jpg",
-//     },
-//   },
-//   {
-//     _id: "2",
-//     createdAt: new Date(Date.now() - 3600000).toISOString(),
-//     loginUser: {
-//       _id: "u2",
-//       firstname: "Sara",
-//       lastname: "Ahmed",
-//       image: "https://randomuser.me/api/portraits/women/44.jpg",
-//     },
-//   },
-//   {
-//     _id: "3",
-//     createdAt: new Date(Date.now() - 7200000).toISOString(),
-//     loginUser: {
-//       _id: "u3",
-//       firstname: "Bilal",
-//       lastname: "Hassan",
-//       image: "https://randomuser.me/api/portraits/men/65.jpg",
-//     },
-//   },
-// ];
+
 
 export const User_Notification = () => {
   const [request, setRequest] = useState([]);
