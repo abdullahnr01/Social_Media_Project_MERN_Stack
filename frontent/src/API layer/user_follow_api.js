@@ -3,11 +3,43 @@ import { toast } from "react-toastify";
 
 let API_Url = "http://localhost:9090";
 
-export const getAllFollowStatus = async () => {
+// export const getAllFollowStatus = async () => {
+//   try {
+//     const Usertoken = localStorage.getItem("token");
+//     const response = await axios.get(
+//       `${API_Url}/user_follow/getAllFollowStatus`,
+//       {
+//         headers: {
+//           Authorization: `Bearer ${Usertoken}`,
+//         },
+//       },
+//     );
+
+//     // toast.success(response.data?.message);
+//     return { success: true, response: response, status: response.status };
+//   } catch (err) {
+//     console.error(`Login info error ${err}`);
+//     if (err.response) {
+//       // toast.error(err.response.data?.message);
+//       return {
+//         success: false,
+//         status: err.response.status,
+//         response: err.response,
+//       };
+//     }
+
+//     toast.error("Network error: Please check your internet connection.");
+//     return { success: false, message: "Network Error" };
+//   }
+// };
+
+//  followUserController ---------------
+
+export const get_user_connection_lists = async (userId) => {
   try {
     const Usertoken = localStorage.getItem("token");
     const response = await axios.get(
-      `${API_Url}/user_follow/getAllFollowStatus`,
+      `${API_Url}/user_follow/connections/${userId}`,
       {
         headers: {
           Authorization: `Bearer ${Usertoken}`,
@@ -18,9 +50,9 @@ export const getAllFollowStatus = async () => {
     // toast.success(response.data?.message);
     return { success: true, response: response, status: response.status };
   } catch (err) {
-    console.error(`Login info error ${err}`);
+    console.error(`Get user connections error: ${err}`);
     if (err.response) {
-      // toast.error(err.response.data?.message);
+      toast.error(err.response.data?.message);
       return {
         success: false,
         status: err.response.status,
@@ -33,7 +65,6 @@ export const getAllFollowStatus = async () => {
   }
 };
 
-//  followUserController ---------------
 export const user_follow_click = async (targetUserId) => {
   try {
     const Usertoken = localStorage.getItem("token");

@@ -96,10 +96,10 @@ function EditProfile() {
           return allowedTypes.includes(value.type);
         },
       )
-      .test("fileSize", "Image must be less than 2MB", (value) => {
+      .test("fileSize", "Image must be less than 5MB", (value) => {
         if (!value) return true;
         if (typeof value === "string") return true;
-        return value.size <= 2 * 1024 * 1024;
+        return value.size <= 5 * 1024 * 1024;
       }),
   });
 
@@ -217,6 +217,11 @@ function EditProfile() {
                 <p className="text-sm text-gray-500 mt-2">
                   Click the camera to change photo
                 </p>
+                  <ErrorMessage
+                  name="image"
+                  component="div"
+                  className="text-sm text-red-500 mt-1 text-center"
+                />
               </div>
 
               {/* First & Last name row */}

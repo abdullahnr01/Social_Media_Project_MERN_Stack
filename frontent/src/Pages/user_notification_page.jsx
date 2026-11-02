@@ -3,29 +3,33 @@ import { FaBellSlash } from "react-icons/fa";
 import { get_user_notification } from "../API layer/api";
 
 import { respond_user_follow_click } from "../API layer/user_follow_api";
-
-
+import { WhiteScreenLoader } from "../Loader/white_bg_loader";
 
 export const User_Notification = () => {
   const [request, setRequest] = useState([]);
   const [removingId, setRemovingId] = useState(null);
-
+  const [loading, setLoading] = useState(true);
 
   const handleGetAllNotification = async (targetId) => {
-    const { success, response, status } = await get_user_notification(targetId);
-    console.log(response?.data);
-    if (success) {
-      const data = response?.data?.data;
-      setRequest(data);
+    try {
+      setLoading(true);
+      const { success, response, status } =
+        await get_user_notification(targetId);
+      if (success) {
+        const data = response?.data?.data;
+        setRequest(data);
+      }
+    } catch (err) {
+      console.error("Notification fetch error:", err);
+    } finally {
+      setLoading(false);
     }
   };
-
   useEffect(() => {
     handleGetAllNotification();
   }, []);
 
-
-    const respondFollowReq = async (targetId, action) => {
+  const respondFollowReq = async (targetId, action) => {
     const { success, response, status } = await respond_user_follow_click(
       targetId,
       action,
@@ -41,6 +45,11 @@ export const User_Notification = () => {
       }, 300);
     }
   };
+
+  if (loading) {
+    return <WhiteScreenLoader message="Loading your notifications..." />;
+  }
+
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">

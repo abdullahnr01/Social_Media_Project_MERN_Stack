@@ -1,16 +1,26 @@
+// built-in
+
 import { useContext, useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+
+// local
+
 import { UserContext } from "../../Context/context";
 import {
   user_edit_post_API,
   get_single_post_API,
 } from "../../API layer/user_post_api";
 import PostBasic from "./Post_basic";
+import { CircleLoader } from "../../Loader/circle_loader";
+
+//  Main Function Start Here
 
 function EditPost() {
   const navigate = useNavigate();
   const { singlePost_data = {}, setSinglePost_data } = useContext(UserContext);
   const { id } = useParams();
+
+  const [isUpdatingLoader, setIsUpdatingLoader] = useState(false);
 
   useEffect(() => {
     const fetchSinglePost = async () => {
@@ -27,7 +37,10 @@ function EditPost() {
 
   const EditPostSubmit = async (values, { resetForm, setSubmitting }) => {
     try {
-      console.log(values);
+      // console.log(values);
+
+      setIsUpdatingLoader(true);
+
       const Editformdata = new FormData();
       Editformdata.append("title", values.title);
       Editformdata.append("description", values.description);
@@ -68,12 +81,17 @@ function EditPost() {
       console.error("Runtime error:", err);
       toast.error("Internal server error.Please try again");
     } finally {
+      setIsUpdatingLoader(false);
       setSubmitting(false);
     }
   };
 
   return (
     <>
+      {isUpdatingLoader && (
+        <CircleLoader size="lg" text="Updating your post..." />
+      )}
+
       <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-6 sm:p-8">
           <h2 className="text-2xl sm:text-3xl font-semibold text-gray-800 mb-6 text-center">

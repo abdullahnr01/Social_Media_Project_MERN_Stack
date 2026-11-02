@@ -21,6 +21,8 @@ import ProtectedRoute from "./Protected Route/protected";
 import PublicRoute from "./Protected Route/public_route";
 import UserAllMessaging from "../Pages/user_messaging_page";
 import { User_Notification } from "../Pages/user_notification_page";
+import { CircleLoader } from "../Loader/circle_loader";
+
 
 //
 
@@ -61,7 +63,7 @@ function AllRouters() {
           </Route>
           <Route path="*" element={<Navigate to="/home" replace />} />
 
-          {/* <Route path="/test" element={<Livechat_modal />} /> */}
+          <Route path="/test" element={<CircleLoader />} />
         </Route>
       </Routes>
     </>
