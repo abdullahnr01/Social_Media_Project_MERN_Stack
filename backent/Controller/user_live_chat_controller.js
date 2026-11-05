@@ -14,7 +14,7 @@ const getUserUnread = (unreadCount, userId) => {
   return unreadMap[key] || 0;
 };
 
-// ye wo converstion bann rahi hai ja profilw k ander msg pr click kiya jaee ga
+// ye wo converstion bann rahi hai ja profile k ander msg pr click kiya jaee ga
 module.exports.user_get_OR_create_conversion = async (req, res) => {
   const senderId = req.UserId; // Logged-in user
   const receiverId = req.params.targetUserId;
