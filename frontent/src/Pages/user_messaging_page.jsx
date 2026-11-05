@@ -28,11 +28,16 @@ function UserAllMessaging() {
 
   // is state me saree users ki chat a rahi hai jo left side pr ati hai
   const [conversations, setConversations] = useState([]);
+
+
   // specific chat k click krne pr us user ki info a rahi hai , name , online
   const [activeChat, setActiveChat] = useState(null);
+
+
+
   const [markRead, setmarkRead] = useState("");
 
-  // specific chat k click krne pr us chat k msg is state me a rae hain
+  // specific chat k click , left side wali chat ane pr us chat k msg is state me a rae hain
   const [userChats, setUserChats] = useState([]);
   const [messageInput, setMessageInput] = useState("");
 
