@@ -175,7 +175,7 @@ function UserAllMessaging() {
     try {
       const { success, response, status } = await user_live_chat_Post_API(
         receiverId,
-        messageInput,
+        currentText,
       );
 
       if (status === 401) {

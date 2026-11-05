@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { get_user_connection_lists } from "../API layer/user_follow_api"; // ✅ 1. Correct API Import
+import { get_user_connection_lists } from "../API layer/user_follow_api"; 
 import { FaTimes, FaUserCircle } from "react-icons/fa";
 
 export const FollowListModal = ({
@@ -18,7 +18,6 @@ export const FollowListModal = ({
       try {
         setLoading(true);
 
-        // ✅ 2. Direct userId use karein jo props se aayi hai
         const { success, response } = await get_user_connection_lists(userId);
 
         if (success) {
