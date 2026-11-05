@@ -110,28 +110,39 @@ module.exports.UsersAllPosts = async (req, res) => {
             $cond: [
               { $gt: [{ $size: "$followStatus" }, 0] },
               {
-                $switch: {
-                  branches: [
-                    {
-                      case: {
-                        $eq: [
-                          { $arrayElemAt: ["$followStatus.status", 0] },
-                          "accepted",
-                        ],
-                      },
-                      then: "Following",
+                $let: {
+                  vars: {
+                    fs: { $arrayElemAt: ["$followStatus", 0] },
+                  },
+                  in: {
+                    $switch: {
+                      branches: [
+                        {
+                          case: { $eq: ["$$fs.status", "accepted"] },
+                          then: "Following",
+                        },
+                        {
+                          case: {
+                            $and: [
+                              { $eq: ["$$fs.status", "Pending"] },
+                              { $eq: ["$$fs.loginUser", User_Id] },
+                            ],
+                          },
+                          then: "Pending...",
+                        },
+                        {
+                          case: {
+                            $and: [
+                              { $eq: ["$$fs.status", "Pending"] },
+                              { $ne: ["$$fs.loginUser", User_Id] },
+                            ],
+                          },
+                          then: "Request",
+                        },
+                      ],
+                      default: "Follow",
                     },
-                    {
-                      case: {
-                        $eq: [
-                          { $arrayElemAt: ["$followStatus.status", 0] },
-                          "Pending",
-                        ],
-                      },
-                      then: "Pending...",
-                    },
-                  ],
-                  default: "Follow",
+                  },
                 },
               },
               "Follow",
@@ -139,58 +150,11 @@ module.exports.UsersAllPosts = async (req, res) => {
           },
         },
       },
-
-      // {
-      //   $addFields: {
-      //     followStatus: {
-      //       $cond: [
-      //         { $gt: [{ $size: "$followStatus" }, 0] },
-      //         {
-      //           $let: {
-      //             vars: {
-      //               fs: { $arrayElemAt: ["$followStatus", 0] },
-      //             },
-      //             in: {
-      //               $switch: {
-      //                 branches: [
-      //                   {
-      //                     case: { $eq: ["$$fs.status", "accepted"] },
-      //                     then: "Following",
-      //                   },
-      //                   {
-      //                     case: {
-      //                       $and: [
-      //                         { $eq: ["$$fs.status", "Pending"] },
-      //                         { $eq: ["$$fs.loginUser", loginUserId] },
-      //                       ],
-      //                     },
-      //                     then: "Pending...",
-      //                   },
-      //                   {
-      //                     case: {
-      //                       $and: [
-      //                         { $eq: ["$$fs.status", "Pending"] },
-      //                         { $ne: ["$$fs.loginUser", loginUserId] },
-      //                       ],
-      //                     },
-      //                     then: "Request",
-      //                   },
-      //                 ],
-      //                 default: "Follow",
-      //               },
-      //             },
-      //           },
-      //         },
-      //         "Follow",
-      //       ],
-      //     },
-      //   },
-      // },
     ]);
 
-    console.log(` This is Response${AllPosts}`);
+    // console.log(` This is Response${AllPosts}`);
 
-    console.log(AllPosts)
+    // console.log(AllPosts)
     return res.status(200).json({ success: true, data: AllPosts });
   } catch (err) {
     console.error("Get all posts error:", err);

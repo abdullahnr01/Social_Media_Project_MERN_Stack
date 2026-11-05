@@ -7,7 +7,7 @@ const ConversationSchema = new mongoose.Schema(
       senderId: { type: mongoose.Schema.Types.ObjectId, ref: "UserSignUp" },
       createdAt: { type: Date, default: Date.now },
     },
-    unreadCount: { type: Number, default: 0 },
+    unreadCount: { type: mongoose.Schema.Types.Mixed, default: {} },
   },
   { timestamps: true },
 );

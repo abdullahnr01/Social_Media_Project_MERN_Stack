@@ -19,13 +19,16 @@ module.exports.followUserController = async (req, res) => {
       });
     }
 
-    let updatedFollow;
-
     if (existingFollow) {
       // Update the existing record directly
       updatedFollow = await UserFollow.findByIdAndUpdate(
         existingFollow._id,
-        { status: "Pending", isDeleted: false },
+        {
+          loginUser: loginUserId,
+          targetuser: targetUserId,
+          status: "Pending",
+          isDeleted: false,
+        },
         { new: true },
       );
     } else {
@@ -34,6 +37,7 @@ module.exports.followUserController = async (req, res) => {
         loginUser: loginUserId,
         targetuser: targetUserId,
         status: "Pending",
+        isDeleted: false,
       });
     }
 
@@ -209,11 +213,11 @@ module.exports.unfollowController = async (req, res) => {
     // Soft delete
     if (!isSwap) {
       existingFollow.isDeleted = true;
-      existingFollow.status = "UnFollow";
+      existingFollow.status = "Removing";
       await existingFollow.save();
     } else {
       existingFollow.isDeleted = true;
-      existingFollow.status = "Removing";
+      existingFollow.status = "UnFollow";
       await existingFollow.save();
     }
 
