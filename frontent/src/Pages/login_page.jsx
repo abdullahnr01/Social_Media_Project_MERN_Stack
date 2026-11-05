@@ -14,8 +14,7 @@ import { user_login_in, GoogleCredential_Login_API } from "../API layer/api";
 
 function Login() {
   // Global States
-  const { credentials, setCredentials } =
-    useContext(UserContext);
+  const { credentials, setCredentials } = useContext(UserContext);
 
   // Local States
   const [showPassword, setShowPassword] = useState(false);
@@ -43,7 +42,7 @@ function Login() {
     const { success, response, status } =
       await GoogleCredential_Login_API(data);
 
-      console.log(`google response ${response}`)
+    console.log(`google response ${response}`);
 
     if (success) {
       setTimeout(() => navigate("/home"), 500);
@@ -87,7 +86,7 @@ function Login() {
       console.error("Runtime error:", err);
       toast.error(err.response?.data?.message);
     } finally {
-      setTimeout(() => setSubmitting(false), 2000);
+      setTimeout(() => setSubmitting(false), 1000);
     }
   };
 
@@ -174,17 +173,25 @@ function Login() {
                 />
 
                 {/* Button */}
+                {/* Button */}
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className={`w-full py-2 px-6 rounded-md mt-3 font-medium 
+                  className={`w-full py-2.5 px-6 rounded-md mt-3 font-medium flex items-center justify-center gap-2.5 transition-all
                   ${
                     isSubmitting
-                      ? "bg-gray-500 text-white cursor-not-allowed opacity-70"
-                      : "bg-[#fbba00] text-white cursor-pointer"
+                      ? "bg-[#fbba00] opacity-80 text-white cursor-not-allowed"
+                      : "bg-[#fbba00] text-white hover:bg-[#e0a600] cursor-pointer"
                   }`}
                 >
-                  {isSubmitting ? "Login..." : "Login"}
+                  {isSubmitting ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block" />
+                      <span>Logging in...</span>
+                    </>
+                  ) : (
+                    "Login"
+                  )}
                 </button>
 
                 <div className="text-right mt-1">

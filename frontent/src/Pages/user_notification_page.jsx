@@ -3,61 +3,33 @@ import { FaBellSlash } from "react-icons/fa";
 import { get_user_notification } from "../API layer/api";
 
 import { respond_user_follow_click } from "../API layer/user_follow_api";
-
-// Static dummy data — backend se bhi isi format mein aayega
-// const dummyRequests = [
-//   {
-//     _id: "1",
-//     createdAt: new Date().toISOString(),
-//     loginUser: {
-//       _id: "u1",
-//       firstname: "Ali",
-//       lastname: "Khan",
-//       image: "https://randomuser.me/api/portraits/men/32.jpg",
-//     },
-//   },
-//   {
-//     _id: "2",
-//     createdAt: new Date(Date.now() - 3600000).toISOString(),
-//     loginUser: {
-//       _id: "u2",
-//       firstname: "Sara",
-//       lastname: "Ahmed",
-//       image: "https://randomuser.me/api/portraits/women/44.jpg",
-//     },
-//   },
-//   {
-//     _id: "3",
-//     createdAt: new Date(Date.now() - 7200000).toISOString(),
-//     loginUser: {
-//       _id: "u3",
-//       firstname: "Bilal",
-//       lastname: "Hassan",
-//       image: "https://randomuser.me/api/portraits/men/65.jpg",
-//     },
-//   },
-// ];
+import { WhiteScreenLoader } from "../Loader/white_bg_loader";
 
 export const User_Notification = () => {
   const [request, setRequest] = useState([]);
   const [removingId, setRemovingId] = useState(null);
-
+  const [loading, setLoading] = useState(true);
 
   const handleGetAllNotification = async (targetId) => {
-    const { success, response, status } = await get_user_notification(targetId);
-    console.log(response?.data);
-    if (success) {
-      const data = response?.data?.data;
-      setRequest(data);
+    try {
+      setLoading(true);
+      const { success, response, status } =
+        await get_user_notification(targetId);
+      if (success) {
+        const data = response?.data?.data;
+        setRequest(data);
+      }
+    } catch (err) {
+      console.error("Notification fetch error:", err);
+    } finally {
+      setLoading(false);
     }
   };
-
   useEffect(() => {
     handleGetAllNotification();
   }, []);
 
-
-    const respondFollowReq = async (targetId, action) => {
+  const respondFollowReq = async (targetId, action) => {
     const { success, response, status } = await respond_user_follow_click(
       targetId,
       action,
@@ -73,6 +45,11 @@ export const User_Notification = () => {
       }, 300);
     }
   };
+
+  if (loading) {
+    return <WhiteScreenLoader message="Loading your notifications..." />;
+  }
+
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">

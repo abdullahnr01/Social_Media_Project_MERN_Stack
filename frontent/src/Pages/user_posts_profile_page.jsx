@@ -6,6 +6,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { UserContext } from "../Context/context";
 import Follow_button from "../Components/Home/PostCards/user_follow_button";
 import Chat_Messaging_Modal from "../Modal/Chat_Box/chat_modal_parent";
+import { WhiteScreenLoader } from "../Loader/white_bg_loader";
 
 // API
 import { get_user_Profile_OR_Posts_API } from "../API layer/user_post_api";
@@ -13,6 +14,9 @@ import {
   get_all_message_API,
   user_get_or_create_conversion_API,
 } from "../API layer/user_live_chat_api";
+
+// Modal File----------
+import { FollowListModal } from "../Modal/follow_list_modal";
 
 //-----------------------function Component---------------
 const User_Profile_Posts = () => {
@@ -22,31 +26,52 @@ const User_Profile_Posts = () => {
   const queryParams = new URLSearchParams(location.search);
   const TargetUserId = queryParams.get("id");
 
+  //  Profile Loading State
+
+  const [profileLoading, setProfileLoading] = useState(true);
+
   //
   const { userPostsProfile, setUserPostsProfile, UserInfo } =
     useContext(UserContext);
+
+  const UserLoginId = UserInfo?.id;
 
   const [userChats, setUserChats] = useState([]);
 
   //
   const [liveChatOpen, setIsLiveChatOpen] = useState(false);
   const [messagesLoaded, setMessagesLoaded] = useState(false);
-  // const [conversionId, setConversionId] = useState("");
 
-  // useEffect(() => {
-  //   console.log(userPostsProfile);
-  // }, [userPostsProfile]);
+  // ye follow or following list ka modal hai
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // ye follow or following list ka active tab ka modal hai
+
+  const [modalTab, setModalTab] = useState("followers");
+
+
+
 
   useEffect(() => {
     const fetchUserProfileWithPosts = async () => {
-      const { success, response, status } =
-        await get_user_Profile_OR_Posts_API(TargetUserId);
-      if (success) {
-        const data = response?.data?.data[0];
-        setUserPostsProfile(data);
+      try {
+        setProfileLoading(true); 
+        const { success, response, status } =
+          await get_user_Profile_OR_Posts_API(TargetUserId);
+        if (success) {
+          const data = response?.data?.data[0];
+          setUserPostsProfile(data);
+        }
+      } catch (err) {
+        console.error("Profile fetch error:", err);
+      } finally {
+        setProfileLoading(false); // Data aate hi Loader band
       }
     };
-    fetchUserProfileWithPosts();
+    if (TargetUserId) {
+      fetchUserProfileWithPosts();
+    }
   }, [TargetUserId]);
 
   const EditProfileRoute = () => {
@@ -86,6 +111,12 @@ const User_Profile_Posts = () => {
   //   }
   // };
 
+  // loader JSX
+
+  if (profileLoading) {
+    return <WhiteScreenLoader message="Loading profile..." />;
+  }
+
   return (
     <>
       <div className="max-w-5xl mx-auto px-4 py-8">
@@ -119,7 +150,13 @@ const User_Profile_Posts = () => {
               </div>
 
               {/* Following */}
-              <div className="flex flex-col items-center bg-white rounded-3xl px-6 py-4 shadow-[0_4px_15px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.22)] hover:scale-105 transition-all duration-300 w-28">
+              <div
+                className="flex flex-col items-center bg-white rounded-3xl px-6 py-4 shadow-[0_4px_15px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.22)] hover:scale-105 transition-all duration-300 w-28"
+                onClick={() => {
+                  setIsModalOpen(true);
+                  setModalTab("following");
+                }}
+              >
                 <span className="font-bold text-xl">
                   {userPostsProfile?.following || 0}
                 </span>
@@ -127,7 +164,13 @@ const User_Profile_Posts = () => {
               </div>
 
               {/* Followers */}
-              <div className="flex flex-col items-center bg-white rounded-3xl px-6 py-4 shadow-[0_4px_15px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.22)] hover:scale-105 transition-all duration-300 w-28">
+              <div
+                className="flex flex-col items-center bg-white rounded-3xl px-6 py-4 shadow-[0_4px_15px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.22)] hover:scale-105 transition-all duration-300 w-28"
+                onClick={() => {
+                  setIsModalOpen(true);
+                  setModalTab("followers");
+                }}
+              >
                 <span className="font-bold text-xl">
                   {userPostsProfile?.followers || 0}
                 </span>
@@ -170,7 +213,7 @@ const User_Profile_Posts = () => {
           </div>
         </div>
 
-        {/* 🔥 User Posts Grid */}
+        {/* User Posts Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-8">
           {userPostsProfile?.posts?.map((post) => (
             <div
@@ -191,6 +234,7 @@ const User_Profile_Posts = () => {
           ))}
         </div>
       </div>
+      {/* -Modal----------- */}
 
       {liveChatOpen && (
         <Chat_Messaging_Modal
@@ -204,6 +248,16 @@ const User_Profile_Posts = () => {
             lastname: userPostsProfile.lastname,
             online: userPostsProfile.isOnline,
           }}
+        />
+      )}
+
+      {/* -Modal----------- */}
+
+      {isModalOpen && (
+        <FollowListModal
+          userId={TargetUserId || UserLoginId}
+          initialTab={modalTab}
+          onClose={() => setIsModalOpen(false)}
         />
       )}
     </>

@@ -10,6 +10,8 @@ import { all_data } from "../API layer/user_post_api";
 
 import { UserContext } from "../Context/context";
 
+import { WhiteScreenLoader } from "../Loader/white_bg_loader";
+
 // built in
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
@@ -26,10 +28,13 @@ import PostCards from "../Components/Home/PostCards/PostCards_parent";
 
 //
 function Home() {
-  const { setSinglePost_data, AllPosts, setAllPosts } =
-    useContext(UserContext);
+  const { setSinglePost_data, AllPosts, setAllPosts } = useContext(UserContext);
+
+  // Loader State
+
+  const [pageLoading, setPageLoading] = useState(true);
+
   // states
- 
 
   //
   const [AllCommentGets, setAllCommentGets] = useState({});
@@ -43,9 +48,8 @@ function Home() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchData();
+    fetchHomeData();
   }, []);
-
 
   useEffect(() => {
     socket.on("newCommentAdded", (data) => {
@@ -73,22 +77,22 @@ function Home() {
     return () => socket.off("commentReplyAdded");
   });
 
-  
-
-  const fetchData = async () => {
-    const { success, response, status } = await all_data();
-    if (status === 401) {
-      localStorage.removeItem("token");
-      navigate("/login");
-      return;
+  const fetchHomeData = async () => {
+    try {
+      const { success, response, status } = await all_data();
+      if (status === 401) {
+        localStorage.removeItem("token");
+        navigate("/login");
+        return;
+      }
+      if (!success) return;
+      setAllPosts(response?.data?.data || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setPageLoading(false);
     }
-    if (!success) return;
-
-    setAllPosts(response?.data?.data || []);
   };
-
- 
-
   // Comment Section ----------------
 
   const handleGetAllComments = async (PostId) => {
@@ -182,7 +186,11 @@ function Home() {
     }
   };
 
- 
+  // Loader Section JSX
+
+  if (pageLoading) {
+    return <WhiteScreenLoader />;
+  }
 
   return (
     <>
@@ -193,7 +201,6 @@ function Home() {
               key={index}
               className="relative bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300"
             >
-             
               {/* Profile Image + Post Image   section----2 */}
 
               <PostCards post={post} index={index} />
@@ -201,7 +208,6 @@ function Home() {
               {/* Like , comment , share  section----3 */}
               <div className="flex justify-around items-center pt-3 text-gray-600 pb-5 ">
                 {/* Like */}
-              
 
                 {/* Comment */}
                 <button
@@ -222,7 +228,6 @@ function Home() {
                 </button>
 
                 {/* Share */}
-              
               </div>
 
               {/* Comment Input field    section----4  */}
@@ -301,10 +306,7 @@ function Home() {
                           </div>
                           <div className="flex-1">
                             <div className="flex justify-between items-center">
-                              <p
-                                className="text-sm font-semibold cursor-pointer"
-                             
-                              >
+                              <p className="text-sm font-semibold cursor-pointer">
                                 {comment?.userId?.firstname}
                               </p>
                               <span className="text-[11px] text-gray-400">
@@ -468,10 +470,6 @@ function Home() {
           ))}
         </div>
       </div>
-
-      
-
-    
     </>
   );
 }

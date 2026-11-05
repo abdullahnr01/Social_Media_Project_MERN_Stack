@@ -71,7 +71,7 @@ const Chat_Messaging_Modal = ({
     try {
       const { success, response, status } = await user_live_chat_Post_API(
         receiverId,
-        messageInput,
+        currentText,
       );
 
       if (status === 401) {

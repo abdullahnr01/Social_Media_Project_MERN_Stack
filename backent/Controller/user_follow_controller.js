@@ -2,8 +2,6 @@
 
 const UserFollow = require("../Model/user_follow_model");
 
-
-
 module.exports.followUserController = async (req, res) => {
   try {
     const loginUserId = req.UserId;
@@ -21,15 +19,16 @@ module.exports.followUserController = async (req, res) => {
       });
     }
 
-    let updatedFollow;
-
-    // follow request send krne wala
-
     if (existingFollow) {
       // Update the existing record directly
       updatedFollow = await UserFollow.findByIdAndUpdate(
         existingFollow._id,
-        { status: "Pending", isDeleted: false },
+        {
+          loginUser: loginUserId,
+          targetuser: targetUserId,
+          status: "Pending",
+          isDeleted: false,
+        },
         { new: true },
       );
     } else {
@@ -38,6 +37,7 @@ module.exports.followUserController = async (req, res) => {
         loginUser: loginUserId,
         targetuser: targetUserId,
         status: "Pending",
+        isDeleted: false,
       });
     }
 
@@ -134,25 +134,29 @@ module.exports.withdrawFollowController = async (req, res) => {
       isDeleted: false,
     });
 
+    // if (!existingFollow) {
+    //   existingFollow = await UserFollow.findOne({
+    //     loginUser: targetUserId,
+    //     targetuser: loginUserId,
+    //     status: "Pending",
+    //     isDeleted: false,
+    //   });
+    // }
+
     if (!existingFollow) {
-      existingFollow = await UserFollow.findOne({
-        loginUser: targetUserId,
-        targetuser: loginUserId,
-        status: "Pending",
-        isDeleted: false,
+      return res.status(404).json({
+        success: false,
+        message:
+          "Pending follow request not found or you are not authorized to withdraw.",
       });
     }
 
-    if (!existingFollow) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Pending follow request not found" });
-    }
-
     // Soft delete
-    existingFollow.isDeleted = true;
-    existingFollow.status = "Withdraw";
-    await existingFollow.save();
+    // existingFollow.isDeleted = true;
+    // existingFollow.status = "Withdraw";
+    // await existingFollow.save();
+
+    await UserFollow.findByIdAndDelete(existingFollow._id);
 
     const io = req.app.get("io");
     io.to(targetUserId.toString()).emit("WithdrawStatusUpdated", {
@@ -209,11 +213,11 @@ module.exports.unfollowController = async (req, res) => {
     // Soft delete
     if (!isSwap) {
       existingFollow.isDeleted = true;
-      existingFollow.status = "UnFollow";
+      existingFollow.status = "Removing";
       await existingFollow.save();
     } else {
       existingFollow.isDeleted = true;
-      existingFollow.status = "Removing";
+      existingFollow.status = "UnFollow";
       await existingFollow.save();
     }
 
@@ -233,6 +237,46 @@ module.exports.unfollowController = async (req, res) => {
     });
   } catch (err) {
     console.error("Unfollow Error:", err);
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error" });
+  }
+};
+
+// Followers & Following List Controller
+module.exports.getFollowersAndFollowingController = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "User ID is required" });
+    }
+
+    //  Followers: Jo log is user ko follow kar rahe hain (targetuser = userId)
+    const followers = await UserFollow.find({
+      targetuser: userId,
+      status: "accepted",
+    })
+      .populate("loginUser", "firstname lastname image")
+      .sort({ updatedAt: -1 });
+
+    //  Following: Jin logon ko is user ne follow kiya hai (loginUser = userId)
+    const following = await UserFollow.find({
+      loginUser: userId,
+      status: "accepted",
+    })
+      .populate("targetuser", "firstname lastname image")
+      .sort({ updatedAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      followers: followers.map((f) => f.loginUser).filter(Boolean),
+      following: following.map((f) => f.targetuser).filter(Boolean),
+    });
+  } catch (err) {
+    console.error("Get Connections Error:", err);
     return res
       .status(500)
       .json({ success: false, message: "Internal server error" });

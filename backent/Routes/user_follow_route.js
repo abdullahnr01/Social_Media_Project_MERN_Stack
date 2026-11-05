@@ -11,6 +11,12 @@ const { auth_middleware } = require("../Middleware/user_middleware");
 //   UserFollow.getFollowStatusController,
 // );
 
+router.get(
+  "/connections/:userId",
+  auth_middleware,
+  UserFollow.getFollowersAndFollowingController,
+);
+
 router.post("/follow", auth_middleware, UserFollow.followUserController);
 router.patch("/withdraw", auth_middleware, UserFollow.withdrawFollowController);
 

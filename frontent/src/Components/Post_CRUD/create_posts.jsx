@@ -3,18 +3,23 @@ import { useNavigate } from "react-router-dom";
 import { UserContext } from "../../Context/context";
 import { user_post_API } from "../../API layer/user_post_api";
 import PostBasic from "./Post_basic";
+import { CircleLoader } from "../../Loader/circle_loader";
+
+// Main Function
 
 function CreatePosts() {
- 
   const navigate = useNavigate();
-  const { setAllPostsAgain } = useContext(UserContext);
 
- 
+  const [isPostingLoader, setIsPostingLoader] = useState(false);
+  const { setAllPostsAgain } = useContext(UserContext);
 
   const CreatePostSubmit = async (values, { resetForm, setSubmitting }) => {
     try {
       //
-      console.log(values)
+      // console.log(values)
+
+      setIsPostingLoader(true);
+
       const postformdata = new FormData();
       postformdata.append("title", values.title);
       postformdata.append("description", values.description);
@@ -42,29 +47,34 @@ function CreatePosts() {
       console.error("Runtime error:", err);
       toast.error("Internal error.Please try again");
     } finally {
+      setIsPostingLoader(false);
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-6 sm:p-8">
-        <h2 className="text-2xl sm:text-3xl font-semibold text-gray-800 mb-6 text-center">
-          Create Post
-        </h2>
+    <>
 
-        <PostBasic
-          initialValues={{
-            title: "",
-            description: "",
-            image: [],
-            hashtags: "",
-          }}
-          onSubmit={CreatePostSubmit}
-          buttonText="Upload Post"
-        />
+      {isPostingLoader && <CircleLoader size="lg" text="Uploading your post..." />}
+      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-6 sm:p-8">
+          <h2 className="text-2xl sm:text-3xl font-semibold text-gray-800 mb-6 text-center">
+            Create Post
+          </h2>
+
+          <PostBasic
+            initialValues={{
+              title: "",
+              description: "",
+              image: [],
+              hashtags: "",
+            }}
+            onSubmit={CreatePostSubmit}
+            buttonText="Upload Post"
+          />
+        </div>
       </div>
-    </div>
+    </>
   );
 
   //   return (

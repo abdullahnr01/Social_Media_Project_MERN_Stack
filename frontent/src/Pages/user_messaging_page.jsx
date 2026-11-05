@@ -18,8 +18,12 @@ import { Msg_Header } from "../Components/Messaging/Msg_Header/info_header";
 import { Action_Header } from "../Components/Messaging/Msg_Header/action_header";
 import { Msg_List } from "../Components/Messaging/Msg_Container/msg_list";
 import { Msg_Input } from "../Components/Messaging/Msg_Input_Bar/msg_input";
+import { WhiteScreenLoader } from "../Loader/white_bg_loader";
 
 function UserAllMessaging() {
+
+    const [loading, setLoading] = useState(true);
+
   const { UserInfo } = useContext(UserContext);
 
   // is state me saree users ki chat a rahi hai jo left side pr ati hai
@@ -60,6 +64,7 @@ function UserAllMessaging() {
   const FetchAllConversations = useCallback(async () => {
     if (!UserLoginId) return;
     try {
+       setLoading(true);
       const res = await user_get_all_conversion_API();
 
       // console.log(res.response?.data?.data);
@@ -97,6 +102,8 @@ function UserAllMessaging() {
       }
     } catch (error) {
       console.error("Error formatting conversation data:", error);
+    } finally {
+      setLoading(false); 
     }
   }, [UserLoginId]);
 
@@ -168,7 +175,7 @@ function UserAllMessaging() {
     try {
       const { success, response, status } = await user_live_chat_Post_API(
         receiverId,
-        messageInput,
+        currentText,
       );
 
       if (status === 401) {
@@ -189,6 +196,11 @@ function UserAllMessaging() {
       );
     }
   };
+
+  if (loading) {
+    return <WhiteScreenLoader message="Loading your messages..." />;
+  }
+
 
   return (
     <div className="flex justify-center items-start bg-slate-100 pt-4 pb-6 px-2 sm:px-6">

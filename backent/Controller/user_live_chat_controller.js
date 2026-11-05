@@ -1,6 +1,19 @@
 const UserConversion = require("../Model/User_Live_Chat/user_conversion_model");
 const UserMessages = require("../Model/User_Live_Chat/user_messages_model");
 
+const getUnreadMap = (unreadCount) => {
+  if (unreadCount && typeof unreadCount === "object" && !Array.isArray(unreadCount)) {
+    return { ...unreadCount };
+  }
+  return {};
+};
+
+const getUserUnread = (unreadCount, userId) => {
+  const unreadMap = getUnreadMap(unreadCount);
+  const key = userId?.toString();
+  return unreadMap[key] || 0;
+};
+
 // ye wo converstion bann rahi hai ja profilw k ander msg pr click kiya jaee ga
 module.exports.user_get_OR_create_conversion = async (req, res) => {
   const senderId = req.UserId; // Logged-in user
@@ -15,7 +28,7 @@ module.exports.user_get_OR_create_conversion = async (req, res) => {
       conversation = await UserConversion.create({
         participants: [senderId, receiverId],
         lastMessage: null,
-        unreadCount: 0,
+        unreadCount: {},
       });
     }
 
@@ -39,9 +52,15 @@ module.exports.get_user_all_conversations = async (req, res) => {
       })
       .sort({ updatedAt: -1 }); // Latest chat sabse upar aayegi
 
+    const data = conversations.map((chat) => {
+      const obj = chat.toObject();
+      obj.unreadCount = getUserUnread(obj.unreadCount, loggedInUserId);
+      return obj;
+    });
+
     return res.status(200).json({
       message: "Conversations fetched successfully",
-      data: conversations,
+      data,
     });
   } catch (err) {
     console.error("Get user conversations error:", err);
@@ -49,7 +68,9 @@ module.exports.get_user_all_conversations = async (req, res) => {
   }
 };
 
-// is se apki chat k msg ate hain , all msg
+// is se apki chat k msg ate hain , all msg --------------------------
+
+
 module.exports.user_get_all_message = async (req, res) => {
   try {
     const UserLoginId = req.UserId;
@@ -82,6 +103,7 @@ module.exports.user_get_all_message = async (req, res) => {
 
 module.exports.mark_as_read = async (req, res) => {
   try {
+    const loggedInUserId = req.UserId;
     const { conversationId } = req.params;
 
     if (!conversationId || conversationId === "undefined") {
@@ -90,9 +112,16 @@ module.exports.mark_as_read = async (req, res) => {
         .json({ message: "Valid conversationId is required" });
     }
 
-    await UserConversion.findByIdAndUpdate(conversationId, {
-      unreadCount: 0,
-    });
+    const conversation = await UserConversion.findById(conversationId);
+    if (!conversation) {
+      return res.status(404).json({ message: "Conversation not found" });
+    }
+
+    const unreadMap = getUnreadMap(conversation.unreadCount);
+    unreadMap[loggedInUserId.toString()] = 0;
+    conversation.unreadCount = unreadMap;
+    conversation.markModified("unreadCount");
+    await conversation.save();
 
     return res.status(200).json({ success: true, message: "Marked as read" });
   } catch (err) {
@@ -101,7 +130,8 @@ module.exports.mark_as_read = async (req, res) => {
   }
 };
 
-// isse ap msg krte hain
+// isse apka msg send krte hain
+
 module.exports.user_live_chat_post = async (req, res) => {
   try {
     const senderId = req.UserId;
@@ -117,6 +147,8 @@ module.exports.user_live_chat_post = async (req, res) => {
       participants: { $all: [senderId, receiverId] },
     });
 
+    const receiverKey = receiverId.toString();
+
     if (!conversation) {
       conversation = await UserConversion.create({
         participants: [senderId, receiverId],
@@ -125,7 +157,7 @@ module.exports.user_live_chat_post = async (req, res) => {
           senderId: senderId,
           createdAt: new Date(),
         },
-        unreadCount: 1,
+        unreadCount: { [receiverKey]: 1 },
       });
     } else {
       conversation.lastMessage = {
@@ -133,7 +165,10 @@ module.exports.user_live_chat_post = async (req, res) => {
         senderId: senderId,
         createdAt: new Date(),
       };
-      conversation.unreadCount += 1;
+      const unreadMap = getUnreadMap(conversation.unreadCount);
+      unreadMap[receiverKey] = (unreadMap[receiverKey] || 0) + 1;
+      conversation.unreadCount = unreadMap;
+      conversation.markModified("unreadCount");
       await conversation.save();
     }
     const message = await UserMessages.create({
@@ -144,7 +179,9 @@ module.exports.user_live_chat_post = async (req, res) => {
     });
 
     const io = req.app.get("io");
-    io.to(receiverId.toString()).emit("receiveMessage", message);
+    if (io) {
+      io.to(receiverKey).emit("receiveMessage", message);
+    }
 
     return res.status(200).json({
       success: true,

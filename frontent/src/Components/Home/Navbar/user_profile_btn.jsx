@@ -100,7 +100,7 @@ export const Nav_User_Profile_Btn = ({ UserInfo }) => {
                   setDropdownOpen(false);
                 }}
               >
-                My Posts
+                My Profile
               </button>
 
               <button
