@@ -105,6 +105,21 @@ export const mark_read_conversation_patch_API = async (conversationId) => {
   }
 };
 
+export const hide_conversation_API = async (conversationId) => {
+  try {
+    const token = localStorage.getItem("token");
+    const response = await axios.delete(
+      `${API_Url}/user_live/conversation/${conversationId}`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    return { success: true, response, status: response.status };
+  } catch (err) {
+    console.error("Hide conversation API error:", err);
+    toast.error(err.response?.data?.message || "Unable to remove conversation.");
+    return { success: false, status: err.response?.status };
+  }
+};
+
 
 
 

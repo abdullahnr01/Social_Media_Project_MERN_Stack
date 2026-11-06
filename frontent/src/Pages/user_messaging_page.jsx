@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useCallback, useContext, useRef } from "react";
-import { Search, MoreVertical, Image as ImageIcon } from "lucide-react";
-import io from "socket.io-client";
-const socket = io("http://localhost:9090");
+import { Search, MoreVertical, Image as ImageIcon, Trash2, X } from "lucide-react";
 import { UserContext } from "../Context/context";
+import socket from "../Socket/socket_io";
 
 // API Import
 
 import {
   user_get_all_conversion_API,
   get_all_message_API,
+  hide_conversation_API,
   mark_read_conversation_patch_API,
   user_live_chat_Post_API,
 } from "../API layer/user_live_chat_api";
@@ -26,7 +26,11 @@ function UserAllMessaging() {
 
 
 
-  const { UserInfo } = useContext(UserContext);
+  const {
+    UserInfo,
+    setUnreadMessagesCount,
+    setActiveConversationId,
+  } = useContext(UserContext);
 
   // is state me saree users ki chat a rahi hai jo left side pr ati hai
   const [conversations, setConversations] = useState([]);
@@ -39,6 +43,8 @@ function UserAllMessaging() {
   // specific chat k click , left side wali chat ane pr us chat k msg is state me a rae hain
   const [userChats, setUserChats] = useState([]);
   const [messageInput, setMessageInput] = useState("");
+  const [deletingConversationId, setDeletingConversationId] = useState(null);
+  const [conversationToDelete, setConversationToDelete] = useState(null);
 
   const activeChatRef = useRef(activeChat);
 
@@ -91,6 +97,9 @@ function UserAllMessaging() {
         });
 
         setConversations(formattedData);
+        setUnreadMessagesCount(
+          formattedData.reduce((total, chat) => total + (Number(chat.unread) || 0), 0),
+        );
       }
     } catch (error) {
       console.error("Error formatting conversation data:", error);
@@ -104,18 +113,24 @@ function UserAllMessaging() {
     FetchAllConversations();
   }, [FetchAllConversations]);
 
+  useEffect(() => {
+    setActiveConversationId(null);
+    return () => setActiveConversationId(null);
+  }, [setActiveConversationId]);
+
   // 3. Socket Listener - Left Side aur Right Side dono live update
   useEffect(() => {
+    let handleReceiveMessage;
     if (UserInfo?._id) {
-      socket.emit("joinUserRoom", UserInfo._id);
-
-      socket.on("receiveMessage", (incomingMessage) => {
+      handleReceiveMessage = (incomingMessage) => {
         const senderId = incomingMessage.senderId || incomingMessage.sender;
         const isChatOpen = activeChatRef.current?.opponentId === senderId;
 
         // 1. Agar samne chat open hai to Right Side (userChats) me message push karo
         if (isChatOpen) {
           setUserChats((prevMessages) => [...prevMessages, incomingMessage]);
+          const conversationId = incomingMessage.conversationId || activeChatRef.current?.id;
+          if (conversationId) mark_read_conversation_patch_API(conversationId);
         }
 
         // 2. Left side conversation list ko live update karo
@@ -149,11 +164,15 @@ function UserAllMessaging() {
             return prevList;
           }
         });
-      });
+      };
+
+      socket.on("receiveMessage", handleReceiveMessage);
     }
 
     return () => {
-      socket.off("receiveMessage");
+      if (handleReceiveMessage) {
+        socket.off("receiveMessage", handleReceiveMessage);
+      }
     };
   }, [UserInfo?._id, FetchAllConversations]);
 
@@ -164,6 +183,7 @@ function UserAllMessaging() {
     }
 
     setActiveChat(chat);
+    setActiveConversationId(chat.id || null);
 
     setConversations((prev) => {
       const updated = [...prev];
@@ -192,9 +212,50 @@ function UserAllMessaging() {
     }
 
     if (chat.id && chat.unread > 0) {
-      await mark_read_conversation_patch_API(chat.id);
+      const result = await mark_read_conversation_patch_API(chat.id);
+      if (result?.success) {
+        setUnreadMessagesCount((count) => Math.max(0, count - chat.unread));
+      }
     }
   };
+
+  const handleDeleteConversation = (event, chat) => {
+    event.stopPropagation();
+    setConversationToDelete(chat);
+  };
+
+  const confirmDeleteConversation = async () => {
+    const chat = conversationToDelete;
+    if (!chat || deletingConversationId) return;
+    setDeletingConversationId(chat.id);
+    const result = await hide_conversation_API(chat.id);
+    if (result?.success) {
+      setConversations((previous) => previous.filter((item) => item.id !== chat.id));
+      setUnreadMessagesCount((count) => Math.max(0, count - (Number(chat.unread) || 0)));
+
+      if (activeChat?.id === chat.id) {
+        setActiveChat(null);
+        setUserChats([]);
+        setMessageInput("");
+        setActiveConversationId(null);
+      }
+      setConversationToDelete(null);
+    }
+    setDeletingConversationId(null);
+  };
+
+  useEffect(() => {
+    if (!conversationToDelete) return undefined;
+
+    const handleEscape = (event) => {
+      if (event.key === "Escape" && !deletingConversationId) {
+        setConversationToDelete(null);
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [conversationToDelete, deletingConversationId]);
 
   // Handle message send
   const handleSendMessage = async () => {
@@ -295,7 +356,7 @@ function UserAllMessaging() {
               <div
                 key={chat.id}
                 onClick={() => handleSelectChat(chat)}
-                className={`flex items-center gap-3 p-3.5 cursor-pointer transition hover:bg-slate-100/80 ${
+                className={`group flex items-center gap-3 p-3.5 cursor-pointer transition hover:bg-slate-100/80 ${
                   activeChat?.id === chat.id
                     ? "bg-blue-50/80 border-l-4 border-[#fbba00]"
                     : ""
@@ -326,12 +387,23 @@ function UserAllMessaging() {
                   </p>
                 </div>
 
-                {/* Unread Badge */}
-                {chat.unread > 0 && (
-                  <span className="bg-[#fbba00] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                    {chat.unread}
-                  </span>
-                )}
+                <div className="flex shrink-0 items-center gap-2">
+                  {chat.unread > 0 && (
+                    <span className="rounded-full bg-[#fbba00] px-2 py-0.5 text-[10px] font-bold text-white">
+                      {chat.unread}
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    title="Delete conversation"
+                    aria-label={`Delete conversation with ${chat.firstname} ${chat.lastname}`}
+                    disabled={deletingConversationId === chat.id}
+                    onClick={(event) => handleDeleteConversation(event, chat)}
+                    className="rounded-full p-2 text-slate-400 transition hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 disabled:opacity-50 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+                  >
+                    <Trash2 size={16} aria-hidden="true" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -363,6 +435,72 @@ function UserAllMessaging() {
           </div>
         )}
       </div>
+      {conversationToDelete && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 px-4 py-6 backdrop-blur-sm"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !deletingConversationId) {
+              setConversationToDelete(null);
+            }
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-conversation-title"
+            aria-describedby="delete-conversation-description"
+            className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5"
+          >
+            <div className="flex items-start justify-between px-6 pb-2 pt-6 sm:px-7 sm:pt-7">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-50 text-red-600 ring-1 ring-red-100">
+                <Trash2 size={22} aria-hidden="true" />
+              </div>
+              <button
+                type="button"
+                aria-label="Close dialog"
+                disabled={Boolean(deletingConversationId)}
+                onClick={() => setConversationToDelete(null)}
+                className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 disabled:opacity-50"
+              >
+                <X size={19} aria-hidden="true" />
+              </button>
+            </div>
+            <div className="px-6 pb-6 sm:px-7">
+              <h2 id="delete-conversation-title" className="text-xl font-bold tracking-tight text-slate-900">
+                Delete this conversation?
+              </h2>
+              <p id="delete-conversation-description" className="mt-2 text-sm leading-6 text-slate-600">
+                It will be removed from your inbox. Your messages will stay saved, and the other person will still have their conversation.
+              </p>
+              <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  disabled={Boolean(deletingConversationId)}
+                  onClick={() => setConversationToDelete(null)}
+                  className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={Boolean(deletingConversationId)}
+                  onClick={confirmDeleteConversation}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-200 disabled:cursor-wait disabled:opacity-70"
+                >
+                  {deletingConversationId ? (
+                    <>
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                      Removing...
+                    </>
+                  ) : (
+                    "Delete conversation"
+                  )}
+                </button>
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 }

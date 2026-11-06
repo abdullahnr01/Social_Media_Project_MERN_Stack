@@ -11,6 +11,7 @@ import CreatePosts from "../Components/Post_CRUD/create_posts";
 import Home from "../Pages/home_page";
 import Login from "../Pages/login_page";
 import SignUp from "../Pages/signup_page";
+import ForgotPassword from "../Pages/forgot_password_page";
 import Navbar from "../Components/Home/Navbar/navbar_parent";
 import EditProfile from "../Pages/user_edit_profile_page";
 import EditPost from "../Components/Post_CRUD/edit_posts";
@@ -38,6 +39,7 @@ function AllRouters() {
         <Route element={<PublicRoute />}>
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
         </Route>
 
         <Route element={<ProtectedRoute />}>

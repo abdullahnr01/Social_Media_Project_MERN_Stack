@@ -15,6 +15,8 @@ export const UserContextProvider = ({ children }) => {
   const [UserInfo, setUserInfo] = useState({});
   const [followStatus, setFollowStatus] = useState({});
   const [singlePost_data, setSinglePost_data] = useState({});
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
+  const [activeConversationId, setActiveConversationId] = useState(null);
 
 
 
@@ -56,6 +58,10 @@ export const UserContextProvider = ({ children }) => {
 
         followStatus,
         setFollowStatus,
+        unreadMessagesCount,
+        setUnreadMessagesCount,
+        activeConversationId,
+        setActiveConversationId,
         //
         setAllPostsAgain,
         AllPostsAgain,

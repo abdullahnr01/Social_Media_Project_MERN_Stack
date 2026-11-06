@@ -195,12 +195,12 @@ function Login() {
                 </button>
 
                 <div className="text-right mt-1">
-                  <a
-                    href="/forgot-password"
+                  <Link
+                    to="/forgot-password"
                     className="text-sm text-gray-900 hover:text-blue-800 hover:underline transition-colors duration-200"
                   >
                     Forgot Password?
-                  </a>
+                  </Link>
                 </div>
 
                 {/* Divider */}

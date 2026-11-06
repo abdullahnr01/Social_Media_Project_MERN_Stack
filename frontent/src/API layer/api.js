@@ -5,6 +5,51 @@ let API_Url = "http://localhost:9090";
 
 import { useNavigate } from "react-router-dom";
 
+export const request_password_reset_code = async (email) => {
+  try {
+    const response = await axios.post(
+      `${API_Url}/user_info/password-reset/request-code`,
+      { email },
+    );
+    return { success: true, response: response.data };
+  } catch (err) {
+    return {
+      success: false,
+      response: err.response?.data || { message: "Unable to send a code right now." },
+    };
+  }
+};
+
+export const verify_password_reset_code = async (email, code) => {
+  try {
+    const response = await axios.post(
+      `${API_Url}/user_info/password-reset/verify-code`,
+      { email, code },
+    );
+    return { success: true, response: response.data };
+  } catch (err) {
+    return {
+      success: false,
+      response: err.response?.data || { message: "Unable to verify the code right now." },
+    };
+  }
+};
+
+export const reset_password = async (email, resetToken, password) => {
+  try {
+    const response = await axios.post(
+      `${API_Url}/user_info/password-reset/reset`,
+      { email, resetToken, password },
+    );
+    return { success: true, response: response.data };
+  } catch (err) {
+    return {
+      success: false,
+      response: err.response?.data || { message: "Unable to reset your password right now." },
+    };
+  }
+};
+
 // Get APIs-------------------------------
 
 

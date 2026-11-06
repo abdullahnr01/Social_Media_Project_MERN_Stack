@@ -1,9 +1,12 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { FaHome, FaPaperPlane, FaBell } from "react-icons/fa";
+import { useContext } from "react";
+import { UserContext } from "../../../Context/context";
 
 export const Nav_Actions = () => {
   const navigate = useNavigate();
+  const { unreadMessagesCount } = useContext(UserContext);
 
   return (
     <div className="flex w-1/2 items-center justify-between pr-2">
@@ -22,8 +25,16 @@ export const Nav_Actions = () => {
         <div
           onClick={() => navigate("/messaging")}
           className="flex flex-col items-center cursor-pointer hover:opacity-80 transition-opacity select-none"
+          aria-label={unreadMessagesCount > 0 ? `Messages, ${unreadMessagesCount} unread` : "Messages"}
         >
-          <FaPaperPlane className="text-white text-xl" />
+          <span className="relative inline-flex">
+            <FaPaperPlane className="text-white text-xl" />
+            {unreadMessagesCount > 0 && (
+              <span className="absolute -right-3 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-[#fbba00] bg-red-600 px-1 text-[10px] font-bold leading-none text-white shadow-md">
+                {unreadMessagesCount > 99 ? "99+" : unreadMessagesCount}
+              </span>
+            )}
+          </span>
           <span className="text-white text-xs mt-0.5 font-medium whitespace-nowrap">
             Messages
           </span>
