@@ -40,7 +40,10 @@ module.exports.user_get_OR_create_conversion = async (req, res) => {
       await conversation.save();
     }
 
-    return res.status(200).json({ conversationId: conversation._id });
+    return res.status(200).json({
+      conversationId: conversation._id,
+      unreadCount: getUserUnread(conversation.unreadCount, senderId),
+    });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Internal server error" });
