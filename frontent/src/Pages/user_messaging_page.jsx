@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useContext } from "react";
+import React, { useState, useEffect, useCallback, useContext, useRef } from "react";
 import { Search, MoreVertical, Image as ImageIcon } from "lucide-react";
 import io from "socket.io-client";
 const socket = io("http://localhost:9090");
@@ -19,22 +19,30 @@ import { Action_Header } from "../Components/Messaging/Msg_Header/action_header"
 import { Msg_List } from "../Components/Messaging/Msg_Container/msg_list";
 import { Msg_Input } from "../Components/Messaging/Msg_Input_Bar/msg_input";
 import { WhiteScreenLoader } from "../Loader/white_bg_loader";
+import { formatConversationTime } from "../Utils/chat_date_formatter";
 
 function UserAllMessaging() {
-
-    const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   const { UserInfo } = useContext(UserContext);
 
   // is state me saree users ki chat a rahi hai jo left side pr ati hai
   const [conversations, setConversations] = useState([]);
+
   // specific chat k click krne pr us user ki info a rahi hai , name , online
   const [activeChat, setActiveChat] = useState(null);
+
   const [markRead, setmarkRead] = useState("");
 
-  // specific chat k click krne pr us chat k msg is state me a rae hain
+  // specific chat k click , left side wali chat ane pr us chat k msg is state me a rae hain
   const [userChats, setUserChats] = useState([]);
   const [messageInput, setMessageInput] = useState("");
+
+  const activeChatRef = useRef(activeChat);
+
+  useEffect(() => {
+    activeChatRef.current = activeChat;
+  }, [activeChat]);
 
   const UserLoginId = UserInfo?._id;
   const receiverId = activeChat?.opponentId; // ye tergetUser id hai
@@ -47,27 +55,12 @@ function UserAllMessaging() {
     console.log(conversations);
   }, [conversations]);
 
-  useEffect(() => {
-    if (UserInfo?._id) {
-      socket.emit("joinUserRoom", UserInfo._id);
-
-      socket.on("receiveMessage", (incomingMessage) => {
-        setUserChats((prevMessages) => [...prevMessages, incomingMessage]);
-      });
-    }
-
-    return () => {
-      socket.off("receiveMessage");
-    };
-  }, [UserInfo?._id]);
-
-  const FetchAllConversations = useCallback(async () => {
+  // 1. Backend se saari conversations fetch karna
+  const FetchAllConversations = useCallback(async (showLoader = true) => {
     if (!UserLoginId) return;
     try {
-       setLoading(true);
+      if (showLoader) setLoading(true);
       const res = await user_get_all_conversion_API();
-
-      // console.log(res.response?.data?.data);
 
       if (res.success && res.response?.data?.data) {
         // Raw backend data ko aapke UI state format mein map karna:
@@ -76,12 +69,9 @@ function UserAllMessaging() {
           const opponent =
             chat.participants.find((user) => user._id !== UserLoginId) || {};
 
-          // Date formatting for UI (e.g., Time or Date)
+          // WhatsApp style Date / Time formatting (Today -> 10:30 AM, Yesterday -> Yesterday, Days -> Mon, Older -> 04/11/26)
           const messageTime = chat.lastMessage?.createdAt
-            ? new Date(chat.lastMessage.createdAt).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })
+            ? formatConversationTime(chat.lastMessage.createdAt)
             : "";
 
           return {
@@ -103,7 +93,7 @@ function UserAllMessaging() {
     } catch (error) {
       console.error("Error formatting conversation data:", error);
     } finally {
-      setLoading(false); 
+      if (showLoader) setLoading(false);
     }
   }, [UserLoginId]);
 
@@ -112,8 +102,60 @@ function UserAllMessaging() {
     FetchAllConversations();
   }, [FetchAllConversations]);
 
-  // ye us specific person ki info or chat la raha hai
+  // 3. Socket Listener - Left Side aur Right Side dono live update
+  useEffect(() => {
+    if (UserInfo?._id) {
+      socket.emit("joinUserRoom", UserInfo._id);
 
+      socket.on("receiveMessage", (incomingMessage) => {
+        const senderId = incomingMessage.senderId || incomingMessage.sender;
+        const isChatOpen = activeChatRef.current?.opponentId === senderId;
+
+        // 1. Agar samne chat open hai to Right Side (userChats) me message push karo
+        if (isChatOpen) {
+          setUserChats((prevMessages) => [...prevMessages, incomingMessage]);
+        }
+
+        // 2. Left side conversation list ko live update karo
+        setConversations((prevList) => {
+          const chatIndex = prevList.findIndex(
+            (c) =>
+              c.opponentId === senderId ||
+              (incomingMessage.conversationId && c.id === incomingMessage.conversationId)
+          );
+
+          const currentTime = formatConversationTime(
+            incomingMessage.createdAt || new Date()
+          );
+
+          if (chatIndex !== -1) {
+            const targetChat = prevList[chatIndex];
+
+            const updatedChat = {
+              ...targetChat,
+              lastMessage: incomingMessage.text,
+              time: currentTime,
+              // Agar chat open hai to unread 0, warna +1
+              unread: isChatOpen ? 0 : (targetChat.unread || 0) + 1,
+            };
+
+            const remainingChats = prevList.filter((_, idx) => idx !== chatIndex);
+            return [updatedChat, ...remainingChats];
+          } else {
+            // Naya user hai jo pehle list me nahi tha
+            FetchAllConversations(false);
+            return prevList;
+          }
+        });
+      });
+    }
+
+    return () => {
+      socket.off("receiveMessage");
+    };
+  }, [UserInfo?._id, FetchAllConversations]);
+
+  // ye us specific person ki info or chat la raha hai
   const handleSelectChat = async (chat) => {
     if (!chat) {
       return;
@@ -172,6 +214,21 @@ function UserAllMessaging() {
 
     setUserChats((prev) => [...prev, tempMessage]);
 
+    // Sender ki apni left sidebar list ko bhi live update aur top par karein
+    setConversations((prev) => {
+      const index = prev.findIndex((c) => c.opponentId === receiverId);
+      if (index === -1) return prev;
+
+      const updatedChat = {
+        ...prev[index],
+        lastMessage: currentText,
+        time: formatConversationTime(new Date()),
+      };
+
+      const remaining = prev.filter((_, idx) => idx !== index);
+      return [updatedChat, ...remaining];
+    });
+
     try {
       const { success, response, status } = await user_live_chat_Post_API(
         receiverId,
@@ -198,9 +255,8 @@ function UserAllMessaging() {
   };
 
   if (loading) {
-    return <WhiteScreenLoader message="Loading your messages..." />;
+    // return <WhiteScreenLoader message="Loading your messages..." />;
   }
-
 
   return (
     <div className="flex justify-center items-start bg-slate-100 pt-4 pb-6 px-2 sm:px-6">
@@ -261,7 +317,7 @@ function UserAllMessaging() {
                       {`${chat.firstname || ""} ${chat.lastname || ""}`.trim() ||
                         "User"}
                     </h3>
-                    <span className="text-xs text-slate-400">{chat.time}</span>
+                    <span className="text-xs text-slate-400 font-medium">{chat.time}</span>
                   </div>
                   <p className="text-xs text-slate-500 truncate">
                     {chat.lastMessage}
