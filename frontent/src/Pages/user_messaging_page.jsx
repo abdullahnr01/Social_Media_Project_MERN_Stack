@@ -255,7 +255,7 @@ function UserAllMessaging() {
   };
 
   if (loading) {
-    return <WhiteScreenLoader message="Loading your messages..." />;
+    // return <WhiteScreenLoader message="Loading your messages..." />;
   }
 
   return (
