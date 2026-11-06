@@ -1,36 +1,43 @@
 import React from "react";
+import { Send } from "lucide-react";
 
-const ChatInput = ({ message, setMessage, onSendMessage }) => {
-  // Enter key press par bhi send karne ka handler
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" && message.trim()) {
-      e.preventDefault();
+const ChatInput = ({ message, setMessage, onSendMessage, disabled = false }) => {
+  const handleKeyDown = (event) => {
+    if (event.key === "Enter" && !event.shiftKey && message.trim() && !disabled) {
+      event.preventDefault();
       onSendMessage();
     }
   };
 
   return (
-    <div className="px-4 py-5 border-t border-gray-200 flex items-center gap-2 w-full">
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (message.trim() && !disabled) onSendMessage();
+      }}
+      className="flex shrink-0 items-center gap-2.5 border-t border-slate-200 bg-white px-3 py-3 sm:px-4"
+    >
       <input
         type="text"
-        placeholder="Type a message..."
+        aria-label="Write a message"
+        placeholder="Write a message..."
+        autoComplete="off"
+        maxLength={2000}
         value={message}
-        onChange={(e) => setMessage(e.target.value)}
+        onChange={(event) => setMessage(event.target.value)}
         onKeyDown={handleKeyDown}
-        className="flex-1 border border-gray-300 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#fbba00]"
+        disabled={disabled}
+        className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-amber-400 focus:bg-white focus:ring-4 focus:ring-amber-100 disabled:opacity-60"
       />
       <button
-        onClick={onSendMessage}
-        disabled={!message.trim()}
-        className={`px-4 py-2 rounded-full transition-colors duration-200 ${
-          message.trim()
-            ? "bg-[#fbba00] text-white hover:bg-[#e0a800] cursor-pointer"
-            : "bg-gray-300 text-gray-500 cursor-not-allowed"
-        }`}
+        type="submit"
+        disabled={!message.trim() || disabled}
+        aria-label="Send message"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#fbba00] text-white shadow-sm transition hover:bg-[#e0a600] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-200 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
       >
-        Send
+        <Send size={18} aria-hidden="true" />
       </button>
-    </div>
+    </form>
   );
 };
 

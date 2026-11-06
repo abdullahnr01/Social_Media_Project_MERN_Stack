@@ -12,7 +12,7 @@ import {
   unfollowUser,
 } from "../../../API layer/user_follow_api";
 
-const Follow_button = ({ target_userId }) => {
+const Follow_button = ({ target_userId, variant = "default" }) => {
   // console.log(target_userId);
 
   //
@@ -33,6 +33,14 @@ const Follow_button = ({ target_userId }) => {
 
   // UserLogin Id ---------------
   const UserLoginId = UserInfo._id;
+  const buttonLabel = followStatus[target_userId] || "Follow";
+  const isProfileVariant = variant === "profile";
+  const profileButtonStateClass =
+    buttonLabel === "Following"
+      ? "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+      : buttonLabel === "Request" || buttonLabel === "Pending..."
+        ? "border border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100"
+        : "border border-transparent bg-[#fbba00] text-white hover:bg-[#e0a800]";
 
   // Post Follow Button live socket useeffect
 
@@ -201,10 +209,14 @@ const Follow_button = ({ target_userId }) => {
       <div>
         {UserLoginId !== target_userId && (
           <button
-            className="px-6 py-2 bg-[#fbba00] text-white text-sm font-medium rounded-full hover:bg-[#e0a800] transition-colors duration-200 cursor-pointer"
+            className={
+              isProfileVariant
+                ? `inline-flex h-11 min-w-[118px] items-center justify-center rounded-xl px-5 text-sm font-semibold shadow-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-100 ${profileButtonStateClass}`
+                : "px-6 py-2 bg-[#fbba00] text-white text-sm font-medium rounded-full hover:bg-[#e0a800] transition-colors duration-200 cursor-pointer"
+            }
             onClick={() => handlePostFollowReq(target_userId)}
           >
-            {followStatus[target_userId] || "Follow"}
+            {buttonLabel}
           </button>
         )}
       </div>

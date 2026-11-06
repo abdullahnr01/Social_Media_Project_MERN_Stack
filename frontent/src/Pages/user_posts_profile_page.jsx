@@ -1,247 +1,368 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-
-//  local
+import {
+  Camera,
+  Heart,
+  Image as ImageIcon,
+  MessageCircle,
+  Pencil,
+  UserRound,
+} from "lucide-react";
 
 import { UserContext } from "../Context/context";
 import Follow_button from "../Components/Home/PostCards/user_follow_button";
 import Chat_Messaging_Modal from "../Modal/Chat_Box/chat_modal_parent";
 import { WhiteScreenLoader } from "../Loader/white_bg_loader";
-
-// API
 import { get_user_Profile_OR_Posts_API } from "../API layer/user_post_api";
 import {
   get_all_message_API,
+  mark_read_conversation_patch_API,
   user_get_or_create_conversion_API,
 } from "../API layer/user_live_chat_api";
-
-// Modal File----------
 import { FollowListModal } from "../Modal/follow_list_modal";
 
-//-----------------------function Component---------------
+const ProfileStat = ({ label, value, onClick }) => {
+  const content = (
+    <>
+      <span className="text-xl font-bold tracking-tight text-slate-900">{value ?? 0}</span>
+      <span className="mt-0.5 text-xs font-medium text-slate-500">{label}</span>
+    </>
+  );
+
+  if (!onClick) {
+    return (
+      <div className="flex min-w-[82px] flex-col items-center rounded-xl border border-slate-100 bg-white px-4 py-3">
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex min-w-[82px] flex-col items-center rounded-xl border border-slate-100 bg-white px-4 py-3 transition hover:border-amber-200 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+    >
+      {content}
+    </button>
+  );
+};
+
 const User_Profile_Posts = () => {
   const location = useLocation();
   const navigate = useNavigate();
-
-  const queryParams = new URLSearchParams(location.search);
-  const TargetUserId = queryParams.get("id");
-
-  //  Profile Loading State
+  const TargetUserId = new URLSearchParams(location.search).get("id");
+  const {
+    userPostsProfile,
+    setUserPostsProfile,
+    UserInfo,
+    setUnreadMessagesCount,
+    setActiveConversationId,
+  } = useContext(UserContext);
+  const UserLoginId = UserInfo?._id;
+  const isOwnProfile = Boolean(
+    UserLoginId && TargetUserId && String(UserLoginId) === String(TargetUserId),
+  );
 
   const [profileLoading, setProfileLoading] = useState(true);
-
-  //
-  const { userPostsProfile, setUserPostsProfile, UserInfo } =
-    useContext(UserContext);
-
-  const UserLoginId = UserInfo?.id;
-
+  const [profileNotFound, setProfileNotFound] = useState(false);
   const [userChats, setUserChats] = useState([]);
-
-  //
   const [liveChatOpen, setIsLiveChatOpen] = useState(false);
+  const [chatLoading, setChatLoading] = useState(false);
   const [messagesLoaded, setMessagesLoaded] = useState(false);
-
-  // ye follow or following list ka modal hai
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // ye follow or following list ka active tab ka modal hai
-
-  const [modalTab, setModalTab] = useState("followers");
-
-
-
+  const [profileConversationId, setProfileConversationId] = useState(null);
+  const [isFollowListOpen, setIsFollowListOpen] = useState(false);
+  const [followListTab, setFollowListTab] = useState("followers");
 
   useEffect(() => {
-    const fetchUserProfileWithPosts = async () => {
+    let isCurrent = true;
+
+    const fetchProfile = async () => {
+      if (!TargetUserId) {
+        setProfileNotFound(true);
+        setProfileLoading(false);
+        return;
+      }
+
+      setProfileLoading(true);
+      setProfileNotFound(false);
+      setMessagesLoaded(false);
+      setUserChats([]);
+      setProfileConversationId(null);
+      setActiveConversationId(null);
+
       try {
-        setProfileLoading(true); 
-        const { success, response, status } =
-          await get_user_Profile_OR_Posts_API(TargetUserId);
-        if (success) {
-          const data = response?.data?.data[0];
-          setUserPostsProfile(data);
+        const result = await get_user_Profile_OR_Posts_API(TargetUserId);
+        const profile = result?.response?.data?.data?.[0];
+        if (!isCurrent) return;
+
+        if (result?.success && profile) {
+          setUserPostsProfile(profile);
+        } else {
+          setProfileNotFound(true);
         }
-      } catch (err) {
-        console.error("Profile fetch error:", err);
+      } catch (error) {
+        if (isCurrent) setProfileNotFound(true);
+        console.error("Profile fetch error:", error);
       } finally {
-        setProfileLoading(false); // Data aate hi Loader band
+        if (isCurrent) setProfileLoading(false);
       }
     };
-    if (TargetUserId) {
-      fetchUserProfileWithPosts();
-    }
-  }, [TargetUserId]);
 
-  const EditProfileRoute = () => {
-    navigate("/edit-profile");
+    fetchProfile();
+    return () => {
+      isCurrent = false;
+    };
+  }, [TargetUserId, setActiveConversationId, setUserPostsProfile]);
+
+  useEffect(() => () => setActiveConversationId(null), [setActiveConversationId]);
+
+  const handleOpenChat = async () => {
+    setIsLiveChatOpen(true);
+    if (chatLoading) return;
+
+    setChatLoading(true);
+    try {
+      const conversationResult = await user_get_or_create_conversion_API(TargetUserId);
+      if (conversationResult?.status === 401) {
+        localStorage.removeItem("token");
+        navigate("/login");
+        return;
+      }
+      const conversationId = conversationResult?.response?.data?.conversationId;
+      if (conversationResult?.success && conversationId) {
+        setProfileConversationId(conversationId);
+        setActiveConversationId(conversationId);
+        const unreadCount = Number(conversationResult.response?.data?.unreadCount) || 0;
+        if (unreadCount > 0) {
+          const readResult = await mark_read_conversation_patch_API(conversationId);
+          if (readResult?.success) {
+            setUnreadMessagesCount((count) => Math.max(0, count - unreadCount));
+          }
+        }
+      }
+
+      if (messagesLoaded) return;
+      const result = await get_all_message_API(TargetUserId);
+      if (result?.status === 401) {
+        localStorage.removeItem("token");
+        navigate("/login");
+        return;
+      }
+      if (result?.success) {
+        setUserChats(result.response?.data?.data || []);
+        setMessagesLoaded(true);
+      }
+    } catch (error) {
+      console.error("Unable to open profile chat:", error);
+    } finally {
+      setChatLoading(false);
+    }
   };
 
-  const handleGetAllMessage = async () => {
-    if (messagesLoaded) return;
-    const { success, response, status } =
-      await get_all_message_API(TargetUserId);
-
-    // console.log(response?.data?.data);
-
-    if (status === 401) {
-      localStorage.removeItem("token");
-      navigate("/login");
-    }
-
-    if (success) {
-      setUserChats(response?.data?.data);
-      setMessagesLoaded(true);
-    }
+  const handleCloseChat = () => {
+    setIsLiveChatOpen(false);
+    setActiveConversationId(null);
   };
-
-  // const handleGetConvserion = async () => {
-  //   if (conversionId) return;
-  //   const { success, response, status } =
-  //     await user_get_or_create_conversion_API(TargetUserId);
-
-  //   if (status === 401) {
-  //     localStorage.removeItem("token");
-  //     navigate("/login");
-  //   }
-
-  //   if (success) {
-  //     setConversionId(response?.data?.conversationId);
-  //   }
-  // };
-
-  // loader JSX
 
   if (profileLoading) {
     return <WhiteScreenLoader message="Loading profile..." />;
   }
 
+  if (profileNotFound || !userPostsProfile) {
+    return (
+      <main className="mx-auto flex min-h-[60vh] max-w-5xl items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
+            <UserRound size={27} aria-hidden="true" />
+          </div>
+          <h1 className="mt-5 text-xl font-bold text-slate-900">Profile unavailable</h1>
+          <p className="mt-2 text-sm leading-6 text-slate-500">
+            This profile could not be loaded. It may have been removed or the link may be incorrect.
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="mt-6 rounded-xl bg-[#fbba00] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#e0a600]"
+          >
+            Go back
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  const posts = userPostsProfile.posts || [];
+  const fullName = `${userPostsProfile.firstname || ""} ${userPostsProfile.lastname || ""}`.trim() || "SocialFirst user";
+
   return (
     <>
-      <div className="max-w-5xl mx-auto px-4 py-8">
-        {/* 🔥 Profile Header */}
-        <div className="flex flex-col md:flex-row items-center md:items-start gap-8 border-b pb-10  p-6  ">
-          {/* Profile Image */}
-          <div className="relative">
-            <img
-              src={userPostsProfile?.image || "/default-profile.png"}
-              alt="profile"
-              className="w-36 h-36 rounded-full object-cover border-4 border-white shadow-lg"
-            />
-          </div>
+      <main className="min-h-[calc(100vh-4rem)] bg-slate-50 px-3 py-6 sm:px-6 sm:py-10">
+        <div className="mx-auto max-w-6xl">
+          <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+            <div className="p-5 sm:p-8">
+              <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center sm:gap-6">
+                <div className="relative shrink-0 rounded-full bg-white p-1.5 shadow-lg ring-1 ring-slate-200">
+                  {userPostsProfile.image ? (
+                    <img
+                      src={userPostsProfile.image}
+                      alt={`${fullName}'s profile`}
+                      referrerPolicy="no-referrer"
+                      className="h-24 w-24 rounded-full object-cover sm:h-28 sm:w-28"
+                    />
+                  ) : (
+                    <div className="flex h-24 w-24 items-center justify-center rounded-full bg-amber-50 text-amber-500 sm:h-28 sm:w-28">
+                      <UserRound size={42} aria-hidden="true" />
+                    </div>
+                  )}
+                  <span
+                    className={`absolute bottom-2 right-2 h-4 w-4 rounded-full border-[3px] border-white ${
+                      userPostsProfile.isOnline ? "bg-emerald-500" : "bg-slate-300"
+                    }`}
+                    title={userPostsProfile.isOnline ? "Online" : "Offline"}
+                  />
+                </div>
 
-          {/* User Info */}
-          <div className="flex-1 text-center md:text-left">
-            {/* Name */}
-            <h2 className="text-3xl font-semibold text-gray-800">
-              {userPostsProfile?.firstname} {userPostsProfile?.lastname}
-            </h2>
+                <div className="flex-1 pb-1 text-center sm:text-left">
+                  <div className="flex flex-col items-center gap-1 sm:flex-row sm:items-center sm:gap-3">
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{fullName}</h1>
+                    {userPostsProfile.isOnline && (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Online
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {isOwnProfile ? "Your SocialFirst profile" : "SocialFirst community member"}
+                  </p>
+                </div>
 
-            {/* Stats */}
-
-            <div className="flex justify-center md:justify-start gap-6 mt-5">
-              {/* Posts */}
-              <div className="flex flex-col items-center bg-white rounded-3xl px-6 py-4 shadow-[0_4px_15px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.22)] hover:scale-105 transition-all duration-300 w-28">
-                <span className="font-bold text-xl">
-                  {userPostsProfile?.totalPosts || 0}
-                </span>
-                <span className="text-gray-500 text-sm mt-1">Posts</span>
+                <div className="flex w-full flex-wrap justify-center gap-2 sm:w-auto sm:justify-end">
+                  {isOwnProfile ? (
+                    <button
+                      type="button"
+                      onClick={() => navigate("/edit-profile")}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#fbba00] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#e0a600] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-200"
+                    >
+                      <Pencil size={16} aria-hidden="true" /> Edit profile
+                    </button>
+                  ) : (
+                    <>
+                      <Follow_button target_userId={TargetUserId} variant="profile" />
+                      <button
+                        type="button"
+                        onClick={handleOpenChat}
+                        disabled={chatLoading}
+                        className="inline-flex h-11 min-w-[118px] items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-amber-300 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-100"
+                      >
+                        <MessageCircle size={17} aria-hidden="true" /> {chatLoading ? "Opening..." : "Message"}
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
 
-              {/* Following */}
-              <div
-                className="flex flex-col items-center bg-white rounded-3xl px-6 py-4 shadow-[0_4px_15px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.22)] hover:scale-105 transition-all duration-300 w-28"
-                onClick={() => {
-                  setIsModalOpen(true);
-                  setModalTab("following");
-                }}
-              >
-                <span className="font-bold text-xl">
-                  {userPostsProfile?.following || 0}
-                </span>
-                <span className="text-gray-500 text-sm mt-1">Following</span>
-              </div>
-
-              {/* Followers */}
-              <div
-                className="flex flex-col items-center bg-white rounded-3xl px-6 py-4 shadow-[0_4px_15px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.22)] hover:scale-105 transition-all duration-300 w-28"
-                onClick={() => {
-                  setIsModalOpen(true);
-                  setModalTab("followers");
-                }}
-              >
-                <span className="font-bold text-xl">
-                  {userPostsProfile?.followers || 0}
-                </span>
-                <span className="text-gray-500 text-sm mt-1">Followers</span>
+              <div className="mt-7 grid gap-6 border-t border-slate-100 pt-6 md:grid-cols-[1fr_auto] md:items-end">
+                <div className="max-w-2xl text-center md:text-left">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">About</p>
+                  <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-600">
+                    {userPostsProfile.user_bio || "This user has not added a bio yet."}
+                  </p>
+                </div>
+                <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
+                  <ProfileStat label="Posts" value={userPostsProfile.totalPosts} />
+                  <ProfileStat
+                    label="Followers"
+                    value={userPostsProfile.followers}
+                    onClick={() => {
+                      setFollowListTab("followers");
+                      setIsFollowListOpen(true);
+                    }}
+                  />
+                  <ProfileStat
+                    label="Following"
+                    value={userPostsProfile.following}
+                    onClick={() => {
+                      setFollowListTab("following");
+                      setIsFollowListOpen(true);
+                    }}
+                  />
+                </div>
               </div>
             </div>
+          </section>
 
-            {/* Bio */}
-            <p className="mt-5 text-gray-700 text-sm max-w-md">
-              {userPostsProfile?.user_bio ||
-                "This user hasn't added a bio yet."}
-            </p>
-            {/* Action Buttons */}
-            <div className="mt-6 flex justify-center md:justify-start gap-2">
-              {/* Follow Button */}
-              <Follow_button target_userId={TargetUserId} />
-
-              {/* Message Button */}
-
-              <button
-                className={`px-6 py-2 text-sm font-medium border transition-colors duration-200 cursor-pointer
-    ${
-      UserInfo._id !== TargetUserId
-        ? "bg-white border-gray-500 text-gray-700 rounded-full"
-        : "bg-white border-gray-500 text-gray-700 hover:bg-yellow-500 hover:text-white w-50 rounded-lg hover:border-none"
-    }`}
-                onClick={() => {
-                  if (UserInfo._id !== TargetUserId) {
-                    // handleGetConvserion();
-                    handleGetAllMessage();
-                    setIsLiveChatOpen(true);
-                  } else {
-                    EditProfileRoute();
-                  }
-                }}
-              >
-                {UserInfo._id !== TargetUserId ? "Message" : "Edit Profile"}
-              </button>
+          <section className="mt-8">
+            <div className="mb-4 flex items-end justify-between border-b border-slate-200 pb-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-600">Profile gallery</p>
+                <h2 className="mt-1 text-xl font-bold text-slate-900">Posts</h2>
+              </div>
+              <span className="rounded-full bg-white px-3 py-1 text-sm font-medium text-slate-500 ring-1 ring-slate-200">
+                {posts.length} {posts.length === 1 ? "post" : "posts"}
+              </span>
             </div>
-          </div>
+
+            {posts.length > 0 ? (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
+                {posts.map((post) => {
+                  const media = post.image?.[0];
+                  const isVideo = typeof media === "string" && /\.(mp4|webm|ogg)(\?.*)?$/i.test(media);
+                  return (
+                    <article
+                      key={post._id}
+                      className="group relative aspect-square overflow-hidden rounded-2xl bg-slate-200 shadow-sm ring-1 ring-slate-900/5"
+                    >
+                      {media ? (
+                        isVideo ? (
+                          <video src={media} muted playsInline className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                        ) : (
+                          <img src={media} alt={post.title || "User post"} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                        )
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-slate-400">
+                          <ImageIcon size={34} aria-hidden="true" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-slate-950/75 via-slate-950/5 to-transparent p-3 opacity-100 transition-opacity duration-200 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 sm:p-4">
+                        {post.title && <p className="line-clamp-2 text-sm font-semibold text-white">{post.title}</p>}
+                        <div className="mt-2 flex items-center gap-3 text-xs font-semibold text-white">
+                          <span className="inline-flex items-center gap-1.5"><Heart size={14} fill="currentColor" />{post.likes?.length || 0}</span>
+                          {post.image?.length > 1 && <span>{post.image.length} photos</span>}
+                        </div>
+                      </div>
+                      {post.image?.length > 1 && (
+                        <span className="absolute right-2 top-2 rounded-full bg-slate-950/55 px-2 py-1 text-[10px] font-semibold text-white backdrop-blur-sm">
+                          {post.image.length} items
+                        </span>
+                      )}
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-14 text-center">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
+                  <Camera size={26} aria-hidden="true" />
+                </div>
+                <h3 className="mt-4 font-semibold text-slate-800">No posts yet</h3>
+                <p className="mt-1 text-sm text-slate-500">
+                  {isOwnProfile ? "Share your first post to start building your gallery." : "This profile has not shared any posts yet."}
+                </p>
+              </div>
+            )}
+          </section>
         </div>
-
-        {/* User Posts Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-8">
-          {userPostsProfile?.posts?.map((post) => (
-            <div
-              key={post._id}
-              className="relative group cursor-pointer overflow-hidden rounded-lg shadow-sm"
-            >
-              <img
-                src={post.image[0]}
-                alt="post"
-                className="w-full h-60 object-cover transition-transform duration-300 group-hover:scale-105"
-              />
-
-              {/* Hover Overlay */}
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-sm font-medium transition">
-                View Post
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-      {/* -Modal----------- */}
+      </main>
 
       {liveChatOpen && (
         <Chat_Messaging_Modal
-          onclose={setIsLiveChatOpen}
+          onclose={handleCloseChat}
           receiverId={TargetUserId}
+          conversationId={profileConversationId}
           setUserChats={setUserChats}
           userChats={userChats}
+          isLoading={chatLoading}
           receiverProfile={{
             image: userPostsProfile.image,
             firstname: userPostsProfile.firstname,
@@ -251,13 +372,11 @@ const User_Profile_Posts = () => {
         />
       )}
 
-      {/* -Modal----------- */}
-
-      {isModalOpen && (
+      {isFollowListOpen && (
         <FollowListModal
           userId={TargetUserId || UserLoginId}
-          initialTab={modalTab}
-          onClose={() => setIsModalOpen(false)}
+          initialTab={followListTab}
+          onClose={() => setIsFollowListOpen(false)}
         />
       )}
     </>

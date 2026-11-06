@@ -1,48 +1,56 @@
-import React, { useEffect, useRef } from "react";
+import React, { useLayoutEffect, useRef } from "react";
+import { MessageCircle } from "lucide-react";
 import { ChatMessageItem } from "./chat_item";
 import { formatMessageDateSeparator } from "../../../Utils/chat_date_formatter";
 
 export const ChatMessageList = ({ messages = [], UserLoginId }) => {
-  const messagesEndRef = useRef(null);
+  const messageContainerRef = useRef(null);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+  useLayoutEffect(() => {
+    const container = messageContainerRef.current;
+    if (container) container.scrollTop = container.scrollHeight;
   }, [messages]);
 
   return (
-    <div className="flex-1 min-h-0 w-full overflow-y-auto overflow-x-hidden px-2 py-4 space-y-3 bg-slate-50 border-x border-slate-100 scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent">
+    <div
+      role="log"
+      aria-live="polite"
+      aria-label="Chat messages"
+      ref={messageContainerRef}
+      className="min-h-0 w-full flex-1 overflow-y-auto overflow-x-hidden bg-slate-50 px-3 py-5 sm:px-4"
+    >
       {messages.length > 0 ? (
         <>
-          {messages.map((msg, index) => {
-            const currentDateLabel = formatMessageDateSeparator(msg.createdAt);
-            const prevDateLabel =
-              index > 0 ? formatMessageDateSeparator(messages[index - 1]?.createdAt) : null;
-            const showDateSeparator = currentDateLabel && currentDateLabel !== prevDateLabel;
+          <div className="space-y-2.5">
+            {messages.map((message, index) => {
+              const currentDate = formatMessageDateSeparator(message.createdAt);
+              const previousDate = index > 0
+                ? formatMessageDateSeparator(messages[index - 1]?.createdAt)
+                : null;
+              const showDate = currentDate && currentDate !== previousDate;
 
-            return (
-              <React.Fragment key={msg._id || index}>
-                {showDateSeparator && (
-                  <div className="flex justify-center my-2 select-none">
-                    <span className="bg-white border border-slate-200/80 text-slate-500 text-[10px] font-medium px-2.5 py-0.5 rounded-full shadow-sm">
-                      {currentDateLabel}
-                    </span>
-                  </div>
-                )}
-                <ChatMessageItem
-                  msg={msg}
-                  UserLoginId={UserLoginId}
-                />
-              </React.Fragment>
-            );
-          })}
-          <div ref={messagesEndRef} />
+              return (
+                <React.Fragment key={message._id || index}>
+                  {showDate && (
+                    <div className="my-4 flex justify-center select-none">
+                      <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[10px] font-medium text-slate-500 shadow-sm">
+                        {currentDate}
+                      </span>
+                    </div>
+                  )}
+                  <ChatMessageItem msg={message} UserLoginId={UserLoginId} />
+                </React.Fragment>
+              );
+            })}
+          </div>
         </>
       ) : (
-        <div className="h-full min-h-[250px] flex flex-col items-center justify-center text-slate-400 font-medium text-sm space-y-1 select-none">
-          <div className="w-12 h-12 rounded-full bg-white border border-slate-200 flex items-center justify-center mb-1 text-xl shadow-sm">
-            💬
+        <div className="flex h-full min-h-[250px] flex-col items-center justify-center space-y-2 text-sm font-medium text-slate-400 select-none">
+          <div className="mb-1 flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-200 bg-white text-amber-500 shadow-sm">
+            <MessageCircle size={25} aria-hidden="true" />
           </div>
-          <p>No messages yet.</p>
+          <p>No messages yet</p>
+          <p className="text-xs font-normal">Say hello to start the conversation.</p>
         </div>
       )}
     </div>

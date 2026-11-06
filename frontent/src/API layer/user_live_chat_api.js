@@ -41,7 +41,6 @@ export const user_get_or_create_conversion_API = async (targetUserId) => {
         headers: { Authorization: `Bearer ${Usertoken}` },
       },
     );
-    toast.success(response.data?.message);
     return { success: true, response: response, status: response.status };
   } catch (err) {
     console.error(`User Get All Message Error ${err}`);

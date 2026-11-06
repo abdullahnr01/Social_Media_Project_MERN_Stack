@@ -1,50 +1,43 @@
 import React from "react";
+import { MessageCircle, X } from "lucide-react";
 
 export const ChatHeader = ({ user, onClose }) => {
-  const name =
-    `${user?.firstname || ""} ${user?.lastname || ""}`.trim() || "User";
-  const image = user?.image || "/default-avatar.png";
+  const name = `${user?.firstname || ""} ${user?.lastname || ""}`.trim() || "User";
 
   return (
-    <div className="px-4 py-3 flex justify-between items-center bg-white text-slate-800 border-b-2 border-[#fbba00] shadow-sm select-none">
-      <div className="flex items-center gap-3">
-        {/* Profile Image & Online Badge */}
-        <div className="relative flex-shrink-0">
-          <img
-            src={image}
-            alt={name}
-            className="w-10 h-10 rounded-full object-cover border border-slate-100 shadow-sm"
-          />
-          {user?.online && (
-            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full ring-1 ring-emerald-500/20" />
+    <header className="relative flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 py-3.5 sm:px-5">
+      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#fbba00] via-amber-400 to-orange-300" />
+      <div className="flex min-w-0 items-center gap-3">
+        <div className="relative shrink-0">
+          {user?.image ? (
+            <img
+              src={user.image}
+              alt={`${name}'s profile`}
+              referrerPolicy="no-referrer"
+              className="h-11 w-11 rounded-full border border-slate-200 object-cover"
+            />
+          ) : (
+            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-amber-50 text-amber-600">
+              <MessageCircle size={21} aria-hidden="true" />
+            </span>
           )}
+          <span className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white ${user?.online ? "bg-emerald-500" : "bg-slate-300"}`} />
         </div>
-
-        {/* Name & Active Status */}
-        <div>
-          <h2 className="font-semibold text-sm text-slate-900 leading-tight">
-            {name}
-          </h2>
-          <p
-            className={`text-[11px] font-medium mt-0.5 ${
-              user?.online ? "text-emerald-600" : "text-slate-400"
-            }`}
-          >
+        <div className="min-w-0">
+          <h2 className="truncate text-sm font-semibold text-slate-900">{name}</h2>
+          <p className={`mt-0.5 flex items-center gap-1.5 text-xs ${user?.online ? "text-emerald-600" : "text-slate-500"}`}>
             {user?.online ? "Active now" : "Offline"}
           </p>
         </div>
       </div>
-
-      {/* Close Button */}
-      {onClose && (
-        <button
-          onClick={() => onClose(false)}
-          className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-all text-xl font-medium cursor-pointer"
-          aria-label="Close"
-        >
-          ✕
-        </button>
-      )}
-    </div>
+      <button
+        type="button"
+        onClick={() => onClose?.(false)}
+        className="ml-3 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+        aria-label="Close chat"
+      >
+        <X size={19} aria-hidden="true" />
+      </button>
+    </header>
   );
 };

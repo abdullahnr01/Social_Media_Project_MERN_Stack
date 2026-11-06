@@ -15,31 +15,29 @@ const formatMessageTime = (dateString) => {
 export const ChatMessageItem = ({ msg, UserLoginId }) => {
   if (!msg) return null;
   const time = formatMessageTime(msg.createdAt);
-  const isMe = String(msg.senderId) === String(UserLoginId);
+  const senderId = msg.senderId || msg.sender;
+  const isMe = String(senderId) === String(UserLoginId);
 
   return (
-    <div className={`flex flex-col ${isMe ? "items-end" : "items-start"} w-full my-0.5 px-1`}>
-      <div className={`flex flex-col ${isMe ? "items-end" : "items-start"} max-w-[75%] sm:max-w-[65%]`}>
-        {/* Chat Bubble */}
+    <div className={`my-0.5 flex w-full flex-col px-1 ${isMe ? "items-end" : "items-start"}`}>
+      <div className={`flex max-w-[82%] flex-col ${isMe ? "items-end" : "items-start"} sm:max-w-[72%]`}>
         <div
-          className={`px-3.5 py-2 rounded-2xl text-sm font-normal leading-relaxed whitespace-pre-wrap shadow-sm ${
+          className={`rounded-2xl px-4 py-2.5 text-sm font-normal leading-relaxed whitespace-pre-wrap shadow-sm ${
             isMe
-              ? "bg-[#fbba00] text-white rounded-br-none" 
-              : "bg-white text-slate-800 rounded-bl-none border border-slate-200/80"
+              ? "rounded-br-md bg-gradient-to-br from-[#fbba00] to-amber-500 text-white"
+              : "rounded-bl-md border border-slate-200 bg-white text-slate-800"
           }`}
-          style={{
-            wordBreak: "break-all",
-            overflowWrap: "anywhere"
-          }}
+          style={{ overflowWrap: "anywhere" }}
         >
           {msg.text}
         </div>
-
-        {/* Time Stamp */}
         {time && (
-          <span className="text-[10px] text-slate-400 mt-1 px-1 font-medium select-none">
+          <span className="mt-1 select-none px-1 text-[10px] font-medium text-slate-400">
             {time}
           </span>
+        )}
+        {msg.status === "failed" && (
+          <span className="mt-1 px-1 text-[10px] font-medium text-red-500">Not sent</span>
         )}
       </div>
     </div>
