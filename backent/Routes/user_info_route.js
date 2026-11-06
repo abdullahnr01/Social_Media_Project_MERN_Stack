@@ -4,6 +4,7 @@ const router = express.Router();
 const ProfileImageMulter = require("../Multer/profile_multer_middleware");
 
 const UserProfile_Controller = require("../Controller/user_profile_controller");
+const PasswordReset_Controller = require("../Controller/user_password_reset_controller");
 
 const {
   user_login_middleware,
@@ -36,6 +37,10 @@ router.post(
 );
 
 router.post("/auth/google", UserProfile_Controller.googleAuthController);
+
+router.post("/password-reset/request-code", PasswordReset_Controller.sendPasswordResetCode);
+router.post("/password-reset/verify-code", PasswordReset_Controller.verifyPasswordResetCode);
+router.post("/password-reset/reset", PasswordReset_Controller.resetPassword);
 
 module.exports = router;
 

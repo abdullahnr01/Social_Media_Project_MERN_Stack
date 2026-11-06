@@ -36,4 +36,10 @@ router.patch(
   UserLiveChatController.mark_as_read,
 );
 
+router.delete(
+  "/conversation/:conversationId",
+  auth_middleware,
+  UserLiveChatController.hide_conversation_for_user,
+);
+
 module.exports = router;

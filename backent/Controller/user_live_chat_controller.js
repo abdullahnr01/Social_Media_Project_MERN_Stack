@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const UserConversion = require("../Model/User_Live_Chat/user_conversion_model");
 const UserMessages = require("../Model/User_Live_Chat/user_messages_model");
 
@@ -30,6 +31,13 @@ module.exports.user_get_OR_create_conversion = async (req, res) => {
         lastMessage: null,
         unreadCount: {},
       });
+    } else if (
+      conversation.hiddenFor?.some((userId) => userId.toString() === senderId.toString())
+    ) {
+      conversation.hiddenFor = conversation.hiddenFor.filter(
+        (userId) => userId.toString() !== senderId.toString(),
+      );
+      await conversation.save();
     }
 
     return res.status(200).json({ conversationId: conversation._id });
@@ -45,6 +53,7 @@ module.exports.get_user_all_conversations = async (req, res) => {
     const loggedInUserId = req.UserId;
     const conversations = await UserConversion.find({
       participants: loggedInUserId,
+      hiddenFor: { $ne: loggedInUserId },
     })
       .populate({
         path: "participants",
@@ -65,6 +74,45 @@ module.exports.get_user_all_conversations = async (req, res) => {
   } catch (err) {
     console.error("Get user conversations error:", err);
     return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+module.exports.hide_conversation_for_user = async (req, res) => {
+  try {
+    const userId = req.UserId;
+    const { conversationId } = req.params;
+
+    if (!conversationId || !mongoose.Types.ObjectId.isValid(conversationId)) {
+      return res.status(400).json({ message: "Valid conversationId is required" });
+    }
+
+    const conversation = await UserConversion.findOne({
+      _id: conversationId,
+      participants: userId,
+    });
+
+    if (!conversation) {
+      return res.status(404).json({ message: "Conversation not found" });
+    }
+
+    const alreadyHidden = conversation.hiddenFor?.some(
+      (hiddenUserId) => hiddenUserId.toString() === userId.toString(),
+    );
+    if (!alreadyHidden) conversation.hiddenFor.push(userId);
+
+    const unreadMap = getUnreadMap(conversation.unreadCount);
+    unreadMap[userId.toString()] = 0;
+    conversation.unreadCount = unreadMap;
+    conversation.markModified("unreadCount");
+    await conversation.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Conversation removed from your inbox. Messages were kept.",
+    });
+  } catch (err) {
+    console.error("Hide conversation error:", err);
+    return res.status(500).json({ message: "Unable to remove conversation right now" });
   }
 };
 
@@ -165,6 +213,10 @@ module.exports.user_live_chat_post = async (req, res) => {
         senderId: senderId,
         createdAt: new Date(),
       };
+      const participantIds = new Set([senderId, receiverId].map((id) => id.toString()));
+      conversation.hiddenFor = (conversation.hiddenFor || []).filter(
+        (hiddenUserId) => !participantIds.has(hiddenUserId.toString()),
+      );
       const unreadMap = getUnreadMap(conversation.unreadCount);
       unreadMap[receiverKey] = (unreadMap[receiverKey] || 0) + 1;
       conversation.unreadCount = unreadMap;
@@ -185,7 +237,7 @@ module.exports.user_live_chat_post = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Message sent successfully",
+      // message: "Message sent successfully",
       data: message,
     });
   } catch (err) {

@@ -8,6 +8,7 @@ const ConversationSchema = new mongoose.Schema(
       createdAt: { type: Date, default: Date.now },
     },
     unreadCount: { type: mongoose.Schema.Types.Mixed, default: {} },
+    hiddenFor: [{ type: mongoose.Schema.Types.ObjectId, ref: "UserSignUp" }],
   },
   { timestamps: true },
 );

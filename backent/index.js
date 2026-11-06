@@ -2,8 +2,9 @@ const express = require("express");
 const app = express();
 const { Server } = require("socket.io");
 const cors = require("cors");
+const path = require("path");
 const PORT = 9090;
-require("dotenv").config();
+require("dotenv").config({ path: path.join(__dirname, ".env") });
 const { handleSendMessage } = require("./Socket/user_live_chat_socket");
 
 //  Route path
