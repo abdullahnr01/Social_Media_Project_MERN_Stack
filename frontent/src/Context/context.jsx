@@ -17,6 +17,14 @@ export const UserContextProvider = ({ children }) => {
   const [singlePost_data, setSinglePost_data] = useState({});
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
   const [activeConversationId, setActiveConversationId] = useState(null);
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem("socialfirst-theme") === "dark" ? "dark" : "light";
+  });
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    localStorage.setItem("socialfirst-theme", theme);
+  }, [theme]);
 
 
 
@@ -62,6 +70,8 @@ export const UserContextProvider = ({ children }) => {
         setUnreadMessagesCount,
         activeConversationId,
         setActiveConversationId,
+        theme,
+        setTheme,
         //
         setAllPostsAgain,
         AllPostsAgain,

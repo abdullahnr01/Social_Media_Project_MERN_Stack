@@ -3,6 +3,25 @@ import { toast } from "react-toastify";
 
 let API_Url = "http://localhost:9090";
 
+export const update_account_privacy = async (isPrivate) => {
+  try {
+    const token = localStorage.getItem("token");
+    const response = await axios.patch(
+      `${API_Url}/user_info/privacy`,
+      { isPrivate },
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    return { success: true, response, status: response.status };
+  } catch (err) {
+    return {
+      success: false,
+      response: err.response,
+      status: err.response?.status,
+      message: err.response?.data?.message || "Unable to update privacy settings.",
+    };
+  }
+};
+
 
 // getUserInfoDataController ----- Get , name + image main
 

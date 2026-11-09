@@ -9,66 +9,57 @@ import { useState } from "react";
 
 const Main_Media = ({ post }) => {
   const [activeIndex, setActiveIndex] = useState(0);
-
-  if (!post?.image || post.image.length === 0) {
-    return null;
-  }
+  const mediaItems = Array.isArray(post?.image) ? post.image : [];
 
   const isVideo = (url) => {
-    return url.match(/\.(mp4|webm|ogg)$/i);
+    return /\.(mp4|webm|ogg)(\?.*)?$/i.test(url || "");
   };
 
   return (
     <div>
-      <p className="text-gray-700 text-sm leading-relaxed mb-4 max-h-32 overflow-y-auto pl-5">
-        {post.description}
-      </p>
+      {post?.description && (
+        <div className="px-4 pb-3 pt-2 sm:px-5">
+          <p className="whitespace-pre-wrap text-sm leading-6 text-slate-700">{post.description}</p>
+        </div>
+      )}
 
-      {/* <img
-        src={`${post.image[0]}`}
-        alt={"Main Image"}
-        className="w-full h-74 object-cover mb-1"
-      /> */}
+      {mediaItems.length > 0 && (
+        <div className="relative w-full overflow-hidden bg-slate-100">
+          {mediaItems.length > 1 && (
+            <div className="absolute right-3 top-3 z-20 rounded-full bg-slate-950/70 px-2.5 py-1 text-xs font-semibold text-white shadow-sm backdrop-blur">
+              {activeIndex + 1} / {mediaItems.length}
+            </div>
+          )}
 
-      <div className="w-full relative">
-        {post.image.length > 1 && (
-          <div
-            className="absolute top-3 right-3 z-20 flex items-center justify-center 
-                bg-black/60 text-white text-sm font-medium 
-                px-3 py-1 rounded-full shadow-md select-none"
+          <Swiper
+            modules={mediaItems.length > 1 ? [Pagination] : []}
+            pagination={mediaItems.length > 1 ? { clickable: true } : false}
+            spaceBetween={10}
+            slidesPerView={1}
+            onSlideChange={(swiper) => setActiveIndex(swiper.activeIndex)}
+            className="w-full"
           >
-            {activeIndex + 1}/{post.image.length}
-          </div>
-        )}
-
-        <Swiper
-          modules={post.image.length > 1 ? [Pagination] : []}
-          pagination={post.image.length > 1 ? { clickable: true } : false}
-          spaceBetween={10}
-          slidesPerView={1}
-          onSlideChange={(swiper) => setActiveIndex(swiper.activeIndex)}
-          className="w-full"
-        >
-          {post.image.map((media, index) => (
-            <SwiperSlide key={index}>
-              {isVideo(media) ? (
-                <video
-                  src={media}
-                  controls
-                  className="w-full max-h-[400px] object-cover"
-                />
-              ) : (
-                <img
-                  src={media}
-                  alt={`media-${index}`}
-                  className="w-full max-h-[400px] object-cover"
-                />
-              )}
-            </SwiperSlide>
-          ))}
-        </Swiper>
+            {mediaItems.map((media, index) => (
+              <SwiperSlide key={`${media}-${index}`}>
+                {isVideo(media) ? (
+                  <video
+                    src={media}
+                    controls
+                    className="max-h-[560px] w-full bg-black object-contain"
+                  />
+                ) : (
+                  <img
+                    src={media}
+                    alt={`${post?.title || "Post"} media ${index + 1}`}
+                    className="max-h-[560px] w-full object-contain"
+                  />
+                )}
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </div>
+      )}
       </div>
-    </div>
   );
 };
 

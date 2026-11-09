@@ -49,19 +49,15 @@ const User_like_Btn = ({ likeCounts, postId, postLiked }) => {
   };
 
   return (
-    <>
-      <button className="flex flex-col items-center group">
-        <div className="flex items-center gap-2 group-hover:text-red-500 transition-colors">
-          <FaHeart
-            className={`text-lg cursor-pointer ${
-              postLiked ? "text-red-500" : "text-gray-500"
-            }`}
-            onClick={() => handlePostLikes(postId)}
-          />
-        </div>
-        <span className="text-xs text-gray-400 mt-1">{likeCounts} Likes</span>
-      </button>
-    </>
+    <button
+      type="button"
+      aria-label={postLiked ? "Unlike post" : "Like post"}
+      onClick={() => handlePostLikes(postId)}
+      className="flex min-w-20 flex-col items-center gap-1.5 rounded-lg py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-200 cursor-pointer"
+    >
+      <FaHeart className={`text-lg ${postLiked ? "text-rose-500" : "text-slate-500"}`} aria-hidden="true" />
+      <span className="text-xs text-slate-500">{likeCounts ?? 0} Likes</span>
+    </button>
   );
 };
 

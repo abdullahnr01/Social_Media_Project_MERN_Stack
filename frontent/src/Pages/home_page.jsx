@@ -17,8 +17,16 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaComment, FaUserCircle } from "react-icons/fa";
 import { format } from "timeago.js";
+import {
+  Bell,
+  House,
+  ImagePlus,
+  MessageCircle,
+  MessagesSquare,
+  Settings,
+  UserRound,
+} from "lucide-react";
 
 //
 import io from "socket.io-client";
@@ -26,9 +34,19 @@ const socket = io("http://localhost:9090");
 
 import PostCards from "../Components/Home/PostCards/PostCards_parent";
 
+const ProfileAvatar = ({ image, name, size = "h-10 w-10" }) => (
+  <span className={`flex ${size} shrink-0 items-center justify-center overflow-hidden rounded-full bg-amber-50 text-amber-600 ring-1 ring-slate-200`}>
+    {image ? (
+      <img src={image} alt={name || ""} referrerPolicy="no-referrer" className="h-full w-full object-cover" />
+    ) : (
+      <UserRound size={20} aria-hidden="true" />
+    )}
+  </span>
+);
+
 //
 function Home() {
-  const { setSinglePost_data, AllPosts, setAllPosts } = useContext(UserContext);
+  const { AllPosts, setAllPosts, UserInfo, unreadMessagesCount } = useContext(UserContext);
 
   // Loader State
 
@@ -46,6 +64,14 @@ function Home() {
   const [showReplies, setShowReplies] = useState(null);
 
   const navigate = useNavigate();
+  const fullName = `${UserInfo?.firstname || ""} ${UserInfo?.lastname || ""}`.trim() || "Your profile";
+  const profilePath = UserInfo?._id ? `/user_profile_posts?id=${UserInfo._id}` : "/home";
+  const navigationItems = [
+    { label: "Home", icon: House, path: "/home", active: true },
+    { label: "Messages", icon: MessagesSquare, path: "/messaging", badge: unreadMessagesCount },
+    { label: "Notifications", icon: Bell, path: "/notifications" },
+    { label: "Settings", icon: Settings, path: "/settings" },
+  ];
 
   useEffect(() => {
     fetchHomeData();
@@ -55,9 +81,13 @@ function Home() {
     socket.on("newCommentAdded", (data) => {
       const postId = data?.comment?.postId;
       const comment = data?.comment;
+      if (!postId || !comment?._id) return;
 
       setAllCommentGets((prev) => ({
-        [postId]: [comment, ...(prev[postId] || [])],
+        ...prev,
+        [postId]: prev[postId]?.some((item) => item._id === comment._id)
+          ? prev[postId]
+          : [comment, ...(prev[postId] || [])],
       }));
     });
 
@@ -67,15 +97,19 @@ function Home() {
   useEffect(() => {
     socket.on("commentReplyAdded", (data) => {
       const commentreply = data?.data || [];
-      const commentIdKey = data?.data.commentId;
+      const commentIdKey = data?.data?.commentId;
+      if (!commentIdKey || !commentreply?._id) return;
 
       setCommentReplies((prev) => ({
-        [commentIdKey]: [commentreply, ...(prev[commentIdKey] || [])],
+        ...prev,
+        [commentIdKey]: prev[commentIdKey]?.some((item) => item._id === commentreply._id)
+          ? prev[commentIdKey]
+          : [commentreply, ...(prev[commentIdKey] || [])],
       }));
     });
 
     return () => socket.off("commentReplyAdded");
-  });
+  }, []);
 
   const fetchHomeData = async () => {
     try {
@@ -106,10 +140,7 @@ function Home() {
 
       if (success) {
         const comments = response?.data || [];
-        const key = comments[0]?.postId;
-        setAllCommentGets({
-          [key]: comments,
-        });
+        setAllCommentGets((previous) => ({ ...previous, [PostId]: comments }));
       }
     } catch (err) {
       console.error("Get All Comments Error", err);
@@ -130,7 +161,15 @@ function Home() {
 
       if (success) {
         resetForm();
-        // setAllCommentGets((prev) => [response.data.comment, ...prev]);
+        const createdComment = response?.data?.comment;
+        if (createdComment?._id) {
+          setAllCommentGets((prev) => ({
+            ...prev,
+            [PostId]: prev[PostId]?.some((item) => item._id === createdComment._id)
+              ? prev[PostId]
+              : [createdComment, ...(prev[PostId] || [])],
+          }));
+        }
       }
     } catch (err) {
       console.error("Post Comment Error", err);
@@ -149,14 +188,7 @@ function Home() {
 
       if (success) {
         const commentReplys = response?.data || [];
-        const key = commentReplys[0]?.commentId;
-
-        // if (!commentReplys || !key) return;
-
-        setCommentReplies({
-          [key]: commentReplys,
-        });
-        console.log(commentReplies);
+        setCommentReplies((previous) => ({ ...previous, [commentId]: commentReplys }));
       }
     } catch (err) {
       console.error("Get All Comments Replies Error", err);
@@ -174,12 +206,21 @@ function Home() {
         return;
       }
 
-      const CommentId = response?.data.data.commentId;
+      const CommentId = response?.data?.data?.commentId || commentId;
 
       if (success) {
         resetForm();
         setShowReplyInput(null);
         setShowReplies(CommentId);
+        const createdReply = response?.data?.data;
+        if (createdReply?._id) {
+          setCommentReplies((prev) => ({
+            ...prev,
+            [CommentId]: prev[CommentId]?.some((item) => item._id === createdReply._id)
+              ? prev[CommentId]
+              : [createdReply, ...(prev[CommentId] || [])],
+          }));
+        }
       }
     } catch (err) {
       console.error("Post Comments Replies Error", err);
@@ -193,48 +234,68 @@ function Home() {
   }
 
   return (
-    <>
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 pt-8">
-        <div className="w-full max-w-lg space-y-4">
-          {AllPosts.map((post, index) => (
-            <div
-              key={index}
-              className="relative bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300"
-            >
-              {/* Profile Image + Post Image   section----2 */}
-
-              <PostCards post={post} index={index} />
-
-              {/* Like , comment , share  section----3 */}
-              <div className="flex justify-around items-center pt-3 text-gray-600 pb-5 ">
-                {/* Like */}
-
-                {/* Comment */}
-                <button
-                  onClick={() => {
-                    if (commentbox === post._id) {
-                      setCommentbox(null);
-                    } else {
-                      setCommentbox(post._id);
-                      handleGetAllComments(post._id);
-                    }
-                  }}
-                  className="flex flex-col items-center group"
-                >
-                  <div className="flex items-center gap-2 group-hover:text-[#fbba00] transition-colors">
-                    <FaComment className="text-lg" />
-                  </div>
-                  <span className="text-xs text-gray-400 mt-1">Comments</span>
-                </button>
-
-                {/* Share */}
+    <div className="min-h-[calc(100vh-4rem)] bg-slate-50">
+      <div className="mx-auto max-w-[1440px] px-4 py-6 sm:px-6 lg:px-8">
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_250px] xl:grid-cols-[220px_minmax(0,660px)_280px] xl:gap-7">
+          <aside className="hidden space-y-4 xl:sticky xl:top-24 xl:block">
+            <section className="rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm">
+              <div className="flex justify-center">
+                <ProfileAvatar image={UserInfo?.image} name={fullName} size="h-16 w-16" />
               </div>
+              <h2 className="mt-3 truncate text-base font-bold text-slate-900">{fullName}</h2>
+              <button type="button" onClick={() => navigate(profilePath)} className="mt-1 text-sm font-medium text-slate-500 transition hover:text-amber-700 focus-visible:outline-none focus-visible:underline">
+                View your profile
+              </button>
+              <button type="button" onClick={() => navigate("/create-post")} className="mt-4 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-[#fbba00] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#e0a600] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-200">
+                <ImagePlus size={17} aria-hidden="true" /> Create a post
+              </button>
+            </section>
+            <nav aria-label="Main navigation" className="rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
+              {navigationItems.map(({ label, icon: Icon, path, badge, active }) => (
+                <button key={label} type="button" onClick={() => navigate(path)} aria-current={active ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 ${active ? "bg-amber-50 text-amber-800" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"}`}>
+                  <Icon size={18} aria-hidden="true" />
+                  <span className="flex-1">{label}</span>
+                  {badge > 0 && <span className="min-w-5 rounded-full bg-red-600 px-1.5 py-0.5 text-center text-[10px] font-bold leading-4 text-white">{badge > 99 ? "99+" : badge}</span>}
+                </button>
+              ))}
+            </nav>
+          </aside>
+
+          <main className="mx-auto w-full min-w-0 max-w-2xl lg:max-w-none">
+            <div className="space-y-5">
+          {AllPosts.length === 0 ? (
+            <section className="rounded-2xl border border-slate-200 bg-white px-6 py-14 text-center shadow-sm sm:py-16">
+              <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-amber-700"><MessagesSquare size={25} aria-hidden="true" /></span>
+              <h2 className="mt-4 text-lg font-bold text-slate-900">Your feed is quiet</h2>
+              <p className="mx-auto mt-1 max-w-sm text-sm leading-6 text-slate-500">Share a moment with your community or check back later for new posts.</p>
+              <button type="button" onClick={() => navigate("/create-post")} className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#fbba00] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#e0a600] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-200">
+                <ImagePlus size={17} aria-hidden="true" /> Create a post
+              </button>
+            </section>
+          ) : AllPosts.map((post, index) => (
+            <div
+              key={post._id || index}
+              className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-shadow duration-200 hover:shadow-md"
+            >
+              <PostCards
+                post={post}
+                index={index}
+                commentsOpen={commentbox === post._id}
+                onCommentClick={() => {
+                  if (commentbox === post._id) {
+                    setCommentbox(null);
+                  } else {
+                    setCommentbox(post._id);
+                    handleGetAllComments(post._id);
+                  }
+                }}
+              />
 
               {/* Comment Input field    section----4  */}
               <div
                 className={`transition-all duration-300 ease-in-out overflow-hidden  mb-2 ${
                   commentbox === post._id
-                    ? "max-h-40 opacity-100"
+                    ? "max-h-44 border-t border-slate-100 bg-slate-50/50 py-3 opacity-100"
                     : "max-h-0 opacity-0"
                 }`}
               >
@@ -249,15 +310,16 @@ function Home() {
                 >
                   {({ isSubmitting, handleSubmit, setFieldValue }) => (
                     <Form
-                      className="flex items-start gap-3 mt-2 px-4 pb-2"
+                      className="flex items-start gap-3 px-4"
                       onSubmit={handleSubmit}
                     >
-                      <div className="flex-1 flex flex-col">
+                      <ProfileAvatar image={UserInfo?.image} name={fullName} size="h-9 w-9" />
+                      <div className="flex min-w-0 flex-1 flex-col">
                         <Field
                           name="comment"
                           type="text"
                           placeholder="Write a comment..."
-                          className="flex-1 border border-gray-500 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#fbba00] focus:border-none mb-2"
+                          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
                           onChange={(e) => {
                             let value = e.target.value;
                             if (value === " ") return;
@@ -268,14 +330,15 @@ function Home() {
                         <ErrorMessage
                           name="comment"
                           component="p"
-                          className="text-red-500 text-xs ml-2"
+                          className="ml-2 mt-1 text-xs text-red-600"
                         />
                       </div>
                       <button
                         type="submit"
-                        className="bg-[#fbba00] text-white px-4 py-2 rounded-full text-sm transition cursor-pointer"
+                        disabled={isSubmitting}
+                        className="rounded-xl bg-[#fbba00] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#e0a600] disabled:cursor-wait disabled:opacity-60"
                       >
-                        Comment
+                        {isSubmitting ? "Sending..." : "Send"}
                       </button>
                     </Form>
                   )}
@@ -284,43 +347,27 @@ function Home() {
 
               {/* Comment message and comment replays  section---5  */}
               {commentbox === post._id && (
-                <div className="px-6 space-y-3 max-h-52 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 pb-5 mb-5">
+                <div className="max-h-80 space-y-3 overflow-y-auto bg-slate-50/50 px-4 pb-4 pt-1 sm:px-5">
                   {AllCommentGets[post._id]?.length > 0 ? (
                     AllCommentGets[post._id]?.map((comment) => (
                       <div
                         key={comment._id}
-                        className="flex flex-col gap-2 bg-gray-100 p-2 rounded-lg shadow-sm"
+                        className="flex items-start gap-3"
                       >
-                        {/* Comment Main */}
-                        <div className="flex items-start gap-3">
-                          <div className="w-8 h-8 rounded-full flex-shrink-0">
-                            {comment?.userId?.image ? (
-                              <img
-                                src={`${comment.userId.image}`}
-                                alt="Profile"
-                                className="w-full h-full rounded-full object-cover"
-                              />
-                            ) : (
-                              <FaUserCircle className="w-10 h-10 text-gray-400" />
-                            )}
+                        <ProfileAvatar image={comment?.userId?.image} name={comment?.userId?.firstname} size="h-9 w-9" />
+                        <div className="min-w-0 flex-1">
+                          <div className="rounded-2xl border border-slate-200/80 bg-white px-3.5 py-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="truncate text-sm font-semibold text-slate-800">{comment?.userId?.firstname || "SocialFirst user"}</p>
+                            <span className="shrink-0 text-[11px] text-slate-400">{format(comment.createdAt)}</span>
                           </div>
-                          <div className="flex-1">
-                            <div className="flex justify-between items-center">
-                              <p className="text-sm font-semibold cursor-pointer">
-                                {comment?.userId?.firstname}
-                              </p>
-                              <span className="text-[11px] text-gray-400">
-                                {format(comment.createdAt)}
-                              </span>
-                            </div>
-                            <p className="text-sm text-gray-700 mt-1">
-                              {comment.comment}
-                            </p>
+                          <p className="mt-1 whitespace-pre-wrap text-sm leading-5 text-slate-700">{comment.comment}</p>
 
                             {/* Actions */}
-                            <div className="mt-2 flex gap-2 text-xs text-gray-500">
+                            <div className="mt-2 flex gap-4 text-xs font-medium text-slate-500">
                               <button
-                                className="hover:text-blue-500 hover:underline"
+                                type="button"
+                                className="transition hover:text-amber-700"
                                 onClick={() => {
                                   if (showReplies === comment._id) {
                                     setShowReplies(null);
@@ -331,11 +378,12 @@ function Home() {
                                 }}
                               >
                                 {showReplies === comment._id
-                                  ? "Close Replies |"
-                                  : "View Replies |"}
+                                  ? "Hide replies"
+                                  : "View replies"}
                               </button>
                               <button
-                                className="hover:text-blue-500 hover:underline"
+                                type="button"
+                                className="transition hover:text-amber-700"
                                 onClick={() => {
                                   if (showReplyInput === comment._id) {
                                     setShowReplyInput(null);
@@ -347,7 +395,6 @@ function Home() {
                                 Reply
                               </button>
                             </div>
-                          </div>
                         </div>
 
                         {/* Static Reply Input (UI only) */}
@@ -376,15 +423,15 @@ function Home() {
                                 setFieldValue,
                               }) => (
                                 <Form
-                                  className="ml-11 mt-2 flex items-start gap-2"
+                                  className="mt-2 flex items-start gap-2"
                                   onSubmit={handleSubmit}
                                 >
-                                  <div className="flex-1 flex flex-col">
+                                  <div className="min-w-0 flex-1 flex-col">
                                     <Field
                                       name="reply"
                                       type="text"
                                       placeholder="Write a reply..."
-                                      className="flex-1 p-2 px-3 border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-none mb-2"
+                                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
                                       onChange={(e) => {
                                         let value = e.target.value;
                                         if (value === " ") return;
@@ -395,12 +442,12 @@ function Home() {
                                     <ErrorMessage
                                       name="reply"
                                       component="p"
-                                      className="text-red-500 text-xs ml-2"
+                                      className="ml-2 mt-1 text-xs text-red-600"
                                     />
                                   </div>
                                   <button
                                     type="submit"
-                                    className="px-4 py-2 mb-2 bg-[#fbba00] text-white rounded-full text-sm font-medium hover:bg-yellow-600 transition-colors duration-200"
+                                    className="rounded-xl bg-slate-900 px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-slate-700"
                                   >
                                     Reply
                                   </button>
@@ -413,37 +460,27 @@ function Home() {
                         {/* Static Replies List */}
 
                         {showReplies === comment._id && (
-                          <div className="ml-10 mt-2 space-y-2">
+                          <div className="mt-3 space-y-2 border-l-2 border-amber-200 pl-3">
                             {commentReplies[comment._id]?.length > 0 ? (
                               commentReplies[comment._id]?.map(
                                 (reply, index) => (
                                   <div
                                     key={index}
-                                    className="bg-gray-50 p-2 rounded-md text-sm mb-2 flex gap-2"
+                                    className="flex items-start gap-2.5"
                                   >
-                                    <div className="w-8 h-8 rounded-full flex-shrink-0">
-                                      {reply?.userId?.image ? (
-                                        <img
-                                          src={`${reply?.userId.image}`}
-                                          alt="Profile"
-                                          className="w-full h-full rounded-full object-cover"
-                                        />
-                                      ) : (
-                                        <FaUserCircle className="w-10 h-10 text-gray-400" />
-                                      )}
-                                    </div>
+                                    <ProfileAvatar image={reply?.userId?.image} name={reply?.userId?.firstname} size="h-7 w-7" />
 
-                                    <div className="flex-1">
-                                      <div className="flex justify-between items-center">
-                                        <p className="text-sm font-semibold cursor-pointer">
+                                    <div className="min-w-0 flex-1 rounded-xl bg-white px-3 py-2 ring-1 ring-slate-200/80">
+                                      <div className="flex items-center justify-between gap-2">
+                                        <p className="text-xs font-semibold text-slate-800">
                                           {reply?.userId?.firstname ||
                                             "Unknown User"}
                                         </p>
-                                        <span className="text-[11px] text-gray-400">
+                                        <span className="text-[10px] text-slate-400">
                                           {format(reply.createdAt)}
                                         </span>
                                       </div>
-                                      <p className="text-sm text-gray-700 mt-1">
+                                      <p className="mt-1 text-sm text-slate-700">
                                         {reply?.commentReply}
                                       </p>
                                     </div>
@@ -451,26 +488,30 @@ function Home() {
                                 ),
                               )
                             ) : (
-                              <p className="text-gray-500 text-sm italic">
-                                No comment replies yet
+                              <p className="text-xs text-slate-500">
+                                No replies yet.
                               </p>
                             )}
                           </div>
                         )}
+                        </div>
                       </div>
                     ))
                   ) : (
-                    <p className="text-gray-400 text-sm text-center">
-                      No comments yet
+                    <p className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-5 text-center text-sm text-slate-500">
+                      No comments yet. Start the conversation.
                     </p>
                   )}
                 </div>
               )}
             </div>
           ))}
+            </div>
+          </main>
+
         </div>
       </div>
-    </>
+    </div>
   );
 }
 

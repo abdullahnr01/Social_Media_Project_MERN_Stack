@@ -1,47 +1,39 @@
-import React, { useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaUserCircle } from "react-icons/fa";
-import { UserContext } from "../../../Context/context";
+import { UserRound } from "lucide-react";
 
 const User_menu_info = ({ post }) => {
   const navigate = useNavigate();
-  const { setUserPostsProfile } = useContext(UserContext);
-
-  const ClickUserPostProfile = () => {
-    navigate(`/user_profile_posts?id=${post.userInfo._id}`);
-  };
+  const fullName = `${post?.userInfo?.firstname || ""} ${post?.userInfo?.lastname || ""}`.trim() || "SocialFirst user";
+  const createdAt = post?.createdAt ? new Date(post.createdAt) : null;
 
   return (
-    <div
-      className="flex items-start space-x-3 cursor-pointer"
-      onClick={() => {
-        ClickUserPostProfile();
-      }}
+    <button
+      type="button"
+      onClick={() => navigate(`/user_profile_posts?id=${post?.userInfo?._id}`)}
+      className="flex min-w-0 items-center gap-3 rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 cursor-pointer"
     >
-      {post?.userInfo?.image ? (
-        <img
-          src={post.userInfo.image}
-          alt="Profile Image"
-          referrerPolicy="no-referrer"
-          className="w-10 h-10 rounded-full object-cover border border-gray-200"
-        />
-      ) : (
-        <FaUserCircle className="w-10 h-10 text-gray-400" />
-      )}
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-amber-50 text-amber-600 ring-1 ring-slate-200">
+        {post?.userInfo?.image ? (
+          <img
+            src={post.userInfo.image}
+            alt=""
+            referrerPolicy="no-referrer"
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <UserRound size={20} aria-hidden="true" />
+        )}
+      </span>
 
-      <div className="flex flex-col">
-        <span className="font-semibold text-gray-800 text-sm">
-          {`${post?.userInfo?.firstname} ${post?.userInfo?.lastname}`}
+      <span className="min-w-0">
+        <span className="block truncate text-sm font-semibold text-slate-900">{fullName}</span>
+        <span className="mt-0.5 block text-xs text-slate-500">
+          {createdAt && !Number.isNaN(createdAt.getTime())
+            ? createdAt.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })
+            : "Recently"}
         </span>
-        <span className="text-xs text-gray-500">
-          {new Date(post.createdAt).toLocaleDateString("en-US", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-          })}
-        </span>
-      </div>
-    </div>
+      </span>
+    </button>
   );
 };
 

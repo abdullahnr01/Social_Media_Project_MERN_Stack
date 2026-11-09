@@ -136,7 +136,10 @@ export const Nav_User_Profile_Btn = ({ UserInfo }) => {
               type="button"
               role="menuitem"
               className={menuItemClass}
-              onClick={() => setDropdownOpen(false)}
+              onClick={() => {
+                navigate("/settings");
+                setDropdownOpen(false);
+              }}
             >
               <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition group-hover:bg-amber-100 group-hover:text-amber-700">
                 <Settings size={17} aria-hidden="true" />

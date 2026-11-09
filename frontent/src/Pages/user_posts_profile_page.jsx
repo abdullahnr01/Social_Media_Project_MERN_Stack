@@ -4,6 +4,7 @@ import {
   Camera,
   Heart,
   Image as ImageIcon,
+  LockKeyhole,
   MessageCircle,
   Pencil,
   UserRound,
@@ -193,6 +194,8 @@ const User_Profile_Posts = () => {
   }
 
   const posts = userPostsProfile.posts || [];
+  const cannotViewPrivatePosts =
+    userPostsProfile.isPrivate && !userPostsProfile.canViewPrivateContent;
   const fullName = `${userPostsProfile.firstname || ""} ${userPostsProfile.lastname || ""}`.trim() || "SocialFirst user";
 
   return (
@@ -303,7 +306,23 @@ const User_Profile_Posts = () => {
               </span>
             </div>
 
-            {posts.length > 0 ? (
+            {cannotViewPrivatePosts ? (
+              <div className="rounded-2xl border border-slate-200 bg-white px-6 py-14 text-center shadow-sm">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-amber-700">
+                  <LockKeyhole size={25} aria-hidden="true" />
+                </div>
+                <h3 className="mt-4 font-semibold text-slate-800">
+                  {userPostsProfile.followStatus === "Pending..."
+                    ? "Follow request sent"
+                    : "This account is private"}
+                </h3>
+                <p className="mx-auto mt-1 max-w-md text-sm leading-6 text-slate-500">
+                  {userPostsProfile.followStatus === "Pending..."
+                    ? "Their posts will appear here if they approve your follow request."
+                    : "Follow this account to request access to their posts and profile gallery."}
+                </p>
+              </div>
+            ) : posts.length > 0 ? (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
                 {posts.map((post) => {
                   const media = post.image?.[0];

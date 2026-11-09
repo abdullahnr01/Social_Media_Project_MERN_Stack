@@ -23,6 +23,7 @@ import PublicRoute from "./Protected Route/public_route";
 import UserAllMessaging from "../Pages/user_messaging_page";
 import { User_Notification } from "../Pages/user_notification_page";
 import { CircleLoader } from "../Loader/circle_loader";
+import SettingsPage from "../Pages/settings_page";
 
 
 //
@@ -62,6 +63,7 @@ function AllRouters() {
             />
             <Route path="/messaging" element={<UserAllMessaging />} />
             <Route path="/notifications" element={<User_Notification />} />
+            <Route path="/settings" element={<SettingsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/home" replace />} />
 
