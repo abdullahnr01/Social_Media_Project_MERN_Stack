@@ -25,6 +25,12 @@ router.patch(
   UserProfile_Controller.UpdateUserInfoController,
 );
 
+router.patch(
+  "/privacy",
+  auth_middleware,
+  UserProfile_Controller.UpdatePrivacySettingsController,
+);
+
 router.post(
   "/signup",
   user_signUp_middleware,

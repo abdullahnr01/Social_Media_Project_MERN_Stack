@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 // User Post Model
 const User = require("../Model/user_post_model");
 const UserInfo = require("../Model/user_signup_model");
+const { canViewUserPosts } = require("../Middleware/private_account_access");
 const cloudinary = require("../Cloudinary/CloudinaryConfig");
 const streamifier = require("streamifier");
 // Get -------------------------------------------
@@ -14,6 +15,9 @@ module.exports.getSinglePostController = async (req, res) => {
     const post = await User.findById(id); // MongoDB me post find karna
     if (!post) {
       return res.status(404).json({ message: "Post Id not found" });
+    }
+    if (!(await canViewUserPosts(req.UserId, post.user_id))) {
+      return res.status(403).json({ message: "This account is private" });
     }
     return res.status(200).json({ success: true, data: post });
   } catch (err) {
@@ -59,12 +63,34 @@ module.exports.UsersAllPosts = async (req, res) => {
           let: { postUserId: "$user_id" },
           pipeline: [
             { $match: { $expr: { $eq: ["$_id", "$$postUserId"] } } },
-            { $project: { _id: 1, firstname: 1, lastname: 1, image: 1 } }, // sirf required fields
+            { $project: { _id: 1, firstname: 1, lastname: 1, image: 1, isPrivate: 1 } }, // sirf required fields
           ],
           as: "userInfo",
         },
       },
       { $unwind: "$userInfo" },
+
+      {
+        $lookup: {
+          from: "userfollowers",
+          let: { postOwnerId: "$user_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$loginUser", User_Id] },
+                    { $eq: ["$targetuser", "$$postOwnerId"] },
+                    { $eq: ["$status", "accepted"] },
+                  ],
+                },
+              },
+            },
+            { $limit: 1 },
+          ],
+          as: "privateFollowAccess",
+        },
+      },
 
       {
         $lookup: {
@@ -102,6 +128,17 @@ module.exports.UsersAllPosts = async (req, res) => {
           isLiked: { $in: [User_Id, "$likes"] },
         },
       },
+      {
+        $match: {
+          $expr: {
+            $or: [
+              { $ne: [{ $ifNull: ["$userInfo.isPrivate", false] }, true] },
+              { $eq: ["$userInfo._id", User_Id] },
+              { $gt: [{ $size: "$privateFollowAccess" }, 0] },
+            ],
+          },
+        },
+      },
 
       //  Convert followStatus array → single string or default "Follow"
       {
@@ -118,7 +155,12 @@ module.exports.UsersAllPosts = async (req, res) => {
                     $switch: {
                       branches: [
                         {
-                          case: { $eq: ["$$fs.status", "accepted"] },
+                          case: {
+                            $and: [
+                              { $eq: ["$$fs.status", "accepted"] },
+                              { $eq: ["$$fs.loginUser", User_Id] },
+                            ],
+                          },
                           then: "Following",
                         },
                         {
@@ -330,7 +372,12 @@ module.exports.UserProfileWithPosts = async (req, res) => {
                     $switch: {
                       branches: [
                         {
-                          case: { $eq: ["$$fs.status", "accepted"] },
+                          case: {
+                            $and: [
+                              { $eq: ["$$fs.status", "accepted"] },
+                              { $eq: ["$$fs.loginUser", loginUserId] },
+                            ],
+                          },
                           then: "Following",
                         },
                         {
@@ -374,13 +421,19 @@ module.exports.UserProfileWithPosts = async (req, res) => {
       },
     ]);
 
-    console.log(result);
-
     if (!result || result.length === 0) {
       return res.status(404).json({
         success: false,
         message: "User data not found",
       });
+    }
+
+    const canViewPrivateContent = await canViewUserPosts(loginUserId, targetUserId);
+    result[0].canViewPrivateContent = canViewPrivateContent;
+    if (result[0].isPrivate && !canViewPrivateContent) {
+      result[0].posts = [];
+      result[0].totalPosts = 0;
+      result[0].totalLikes = 0;
     }
 
     res.status(200).json({ success: true, data: result });

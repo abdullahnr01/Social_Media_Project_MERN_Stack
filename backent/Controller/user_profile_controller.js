@@ -34,6 +34,39 @@ module.exports.getUserInfoDataController = async (req, res) => {
   }
 };
 
+module.exports.UpdatePrivacySettingsController = async (req, res) => {
+  try {
+    if (typeof req.body?.isPrivate !== "boolean") {
+      return res.status(400).json({
+        success: false,
+        message: "isPrivate must be true or false",
+      });
+    }
+
+    const user = await UserSignUp.findByIdAndUpdate(
+      req.UserId,
+      { $set: { isPrivate: req.body.isPrivate } },
+      { new: true, runValidators: true },
+    ).select("isPrivate");
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    return res.status(200).json({
+      success: true,
+      isPrivate: user.isPrivate,
+      message: "Privacy setting updated",
+    });
+  } catch (err) {
+    console.error("Privacy settings update error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Unable to update privacy settings right now",
+    });
+  }
+};
+
 
 module.exports.UpdateUserInfoController = async (req, res) => {
   try {

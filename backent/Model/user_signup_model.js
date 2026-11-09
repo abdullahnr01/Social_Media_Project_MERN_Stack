@@ -8,6 +8,7 @@ const userSignUpSchema = new Schema(
     user_bio: {
       type: String,
     },
+    isPrivate: { type: Boolean, default: false },
     date_of_birth: { type: Date, required: false },
     gender: {
       type: String,

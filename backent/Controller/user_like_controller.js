@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
 const User = require("../Model/user_post_model");
+const UserSignUp = require("../Model/user_signup_model");
 const UserNotification = require("../Model/user_notification_model");
+const { canViewUserPosts } = require("../Middleware/private_account_access");
 
 module.exports.UserPatchLikeController = async (req, res) => {
   try {
@@ -9,6 +11,9 @@ module.exports.UserPatchLikeController = async (req, res) => {
 
     const post = await User.findById(postId);
     if (!post) return res.status(404).json({ message: "Post not found" });
+    if (!(await canViewUserPosts(User_Id, post.user_id))) {
+      return res.status(403).json({ message: "This account is private" });
+    }
 
     const alreadyLiked = post.likes.some(
       (likedUserId) => likedUserId.toString() === User_Id.toString(),
@@ -26,10 +31,13 @@ module.exports.UserPatchLikeController = async (req, res) => {
     const isLiked = post.likes.includes(User_Id);
 
     const io = req.app.get("io");
-    io.emit("likeUpdated", {
-      postId,
-      likeCount,
-    });
+    const postOwner = await UserSignUp.findById(post.user_id).select("isPrivate");
+    if (!postOwner?.isPrivate) {
+      io.emit("likeUpdated", {
+        postId,
+        likeCount,
+      });
+    }
 
     if (!alreadyLiked && post.user_id.toString() !== User_Id.toString()) {
       try {
@@ -44,10 +52,12 @@ module.exports.UserPatchLikeController = async (req, res) => {
           .populate("post", "title image")
           .lean();
 
-        io.to(post.user_id.toString()).emit(
-          "newPostLikeNotification",
-          populatedNotification,
-        );
+        if (!postOwner?.isPrivate) {
+          io.to(post.user_id.toString()).emit(
+            "newPostLikeNotification",
+            populatedNotification,
+          );
+        }
       } catch (notificationError) {
         console.error("Post like notification error:", notificationError);
       }

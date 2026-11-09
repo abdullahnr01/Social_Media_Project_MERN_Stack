@@ -3,6 +3,7 @@ const User = require("../Model/user_post_model");
 const UserComment = require("../Model/user_comment_model");
 // User Comment Reply Model
 const UserCommentReply = require("../Model/user_comment_reply");
+const { canViewUserPosts } = require("../Middleware/private_account_access");
 
 module.exports.getAllCommentsController = async (req, res) => {
   try {
@@ -11,6 +12,11 @@ module.exports.getAllCommentsController = async (req, res) => {
 
     if (!postId) {
       return res.status(400).json({ message: "Post ID is required" });
+    }
+    const post = await User.findById(postId).select("user_id");
+    if (!post) return res.status(404).json({ message: "Post not found" });
+    if (!(await canViewUserPosts(User_Id, post.user_id))) {
+      return res.status(403).json({ message: "This account is private" });
     }
     const GetAllComments = await UserComment.find({ postId: postId })
       .populate("userId", "firstname lastname image")
@@ -29,6 +35,13 @@ module.exports.getAllCommentReplyController = async (req, res) => {
     const CommentId = req.headers["comment-id"];
     if (!CommentId) {
       return res.status(400).json({ message: "Comment ID is required" });
+    }
+    const parentComment = await UserComment.findById(CommentId).select("postId");
+    if (!parentComment) return res.status(404).json({ message: "Comment not found" });
+    const parentPost = await User.findById(parentComment.postId).select("user_id");
+    if (!parentPost) return res.status(404).json({ message: "Post not found" });
+    if (!(await canViewUserPosts(User_Id, parentPost.user_id))) {
+      return res.status(403).json({ message: "This account is private" });
     }
     const GetAllCommentsReply = await UserCommentReply.find({
       commentId: CommentId,
@@ -58,6 +71,9 @@ module.exports.UserPostCommentController = async (req, res) => {
     if (!PostExisting) {
       return res.status(404).json({ message: "Post not found" });
     }
+    if (!(await canViewUserPosts(User_Id, PostExisting.user_id))) {
+      return res.status(403).json({ message: "This account is private" });
+    }
 
     const newComment = await UserComment.create({
       postId: PostExisting,
@@ -70,11 +86,13 @@ module.exports.UserPostCommentController = async (req, res) => {
     ).populate("userId", "firstname lastname image");
 
     const io = req.app.get("io");
-
-    io.emit("newCommentAdded", {
-      PostId,
-      comment: populatedComment,
-    });
+    const postOwner = await UserSignUp.findById(PostExisting.user_id).select("isPrivate");
+    if (!postOwner?.isPrivate) {
+      io.emit("newCommentAdded", {
+        PostId,
+        comment: populatedComment,
+      });
+    }
 
     return res.status(201).json({
       message: "Comment added successfully",
@@ -97,6 +115,14 @@ module.exports.UserPostCommentReplyController = async (req, res) => {
         .json({ message: "Comment ID and Reply are required" });
     }
 
+    const parentComment = await UserComment.findById(commentId).select("postId");
+    if (!parentComment) return res.status(404).json({ message: "Comment not found" });
+    const parentPost = await User.findById(parentComment.postId).select("user_id");
+    if (!parentPost) return res.status(404).json({ message: "Post not found" });
+    if (!(await canViewUserPosts(User_Id, parentPost.user_id))) {
+      return res.status(403).json({ message: "This account is private" });
+    }
+
     const newReply = new UserCommentReply({
       userId: User_Id,
       commentId: commentId,
@@ -111,10 +137,13 @@ module.exports.UserPostCommentReplyController = async (req, res) => {
     );
 
     const io = req.app.get("io");
-    io.emit("commentReplyAdded", {
-      commentId,
-      data: populatedReply,
-    });
+    const postOwnerInfo = await UserSignUp.findById(parentPost.user_id).select("isPrivate");
+    if (!postOwnerInfo?.isPrivate) {
+      io.emit("commentReplyAdded", {
+        commentId,
+        data: populatedReply,
+      });
+    }
 
     return res.status(200).json({
       success: true,
