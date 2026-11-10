@@ -3,6 +3,26 @@ import { toast } from "react-toastify";
 
 let API_Url = "http://localhost:9090";
 
+export const getSuggestedUsers = async () => {
+  try {
+    const Usertoken = localStorage.getItem("token");
+    const response = await axios.get(`${API_Url}/user_search/suggestions`, {
+      headers: {
+        Authorization: `Bearer ${Usertoken}`,
+      },
+    });
+
+    return { success: true, response, status: response.status };
+  } catch (err) {
+    console.error("Suggested users request failed:", err);
+    return {
+      success: false,
+      status: err.response?.status,
+      message: err.response?.data?.message || "Unable to load people to discover.",
+    };
+  }
+};
+
 export const getSearchUserProfile = async (query = "") => {
   try {
     const Usertoken = localStorage.getItem("token");

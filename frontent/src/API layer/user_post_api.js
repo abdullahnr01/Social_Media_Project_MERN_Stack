@@ -3,6 +3,59 @@ import { toast } from "react-toastify";
 
 let API_Url = "http://localhost:9090";
 
+export const get_saved_posts_API = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    const response = await axios.get(`${API_Url}/user_post/saved`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return { success: true, response, status: response.status };
+  } catch (err) {
+    return {
+      success: false,
+      response: err.response,
+      status: err.response?.status,
+      message: err.response?.data?.message || "Unable to load saved posts.",
+    };
+  }
+};
+
+export const save_post_API = async (postId) => {
+  try {
+    const token = localStorage.getItem("token");
+    const response = await axios.put(
+      `${API_Url}/user_post/${postId}/save`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    return { success: true, response, status: response.status };
+  } catch (err) {
+    return {
+      success: false,
+      response: err.response,
+      status: err.response?.status,
+      message: err.response?.data?.message || "Unable to save this post.",
+    };
+  }
+};
+
+export const unsave_post_API = async (postId) => {
+  try {
+    const token = localStorage.getItem("token");
+    const response = await axios.delete(`${API_Url}/user_post/${postId}/save`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return { success: true, response, status: response.status };
+  } catch (err) {
+    return {
+      success: false,
+      response: err.response,
+      status: err.response?.status,
+      message: err.response?.data?.message || "Unable to remove this saved post.",
+    };
+  }
+};
+
 
 export const all_data = async () => {
   try {

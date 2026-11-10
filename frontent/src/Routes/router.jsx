@@ -24,6 +24,7 @@ import UserAllMessaging from "../Pages/user_messaging_page";
 import { User_Notification } from "../Pages/user_notification_page";
 import { CircleLoader } from "../Loader/circle_loader";
 import SettingsPage from "../Pages/settings_page";
+import SavedPostsPage from "../Pages/saved_posts_page";
 
 
 //
@@ -64,6 +65,7 @@ function AllRouters() {
             <Route path="/messaging" element={<UserAllMessaging />} />
             <Route path="/notifications" element={<User_Notification />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/saved" element={<SavedPostsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/home" replace />} />
 

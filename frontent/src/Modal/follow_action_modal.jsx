@@ -11,6 +11,7 @@ const FollowActionModal = ({
   status,
   onClose,
   perspective,
+  onStatusChange,
 }) => {
   const isRequest = status === "Request";
   const isPending = status === "Pending...";
@@ -21,11 +22,13 @@ const FollowActionModal = ({
       if (isPending) {
         const { success, response, status } = await withdrawFollow(targetId);
         if (success) {
+          onStatusChange?.("Follow", { action: "withdraw" });
           onClose();
         }
       } else if (isFollowing) {
         const { success, response, status } = await unfollowUser(targetId);
         if (success) {
+          onStatusChange?.("Follow", { action: "unfollow" });
           onClose();
         }
       }
@@ -40,6 +43,7 @@ const FollowActionModal = ({
       action,
     );
     if (success) {
+      onStatusChange?.("Follow", { action });
       onClose();
     }
   };

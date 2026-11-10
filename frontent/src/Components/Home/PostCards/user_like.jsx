@@ -11,26 +11,29 @@ import {
 import { user_post_likes } from "../../../API layer/api";
 
 const User_like_Btn = ({ likeCounts, postId, postLiked }) => {
+  const { setAllPosts } = useContext(UserContext);
+  const [isLiked, setIsLiked] = React.useState(Boolean(postLiked));
+  const [currentLikeCount, setCurrentLikeCount] = React.useState(Number(likeCounts) || 0);
 
-    const {setAllPosts} = useContext(UserContext)
+  useEffect(() => setIsLiked(Boolean(postLiked)), [postLiked]);
+  useEffect(() => setCurrentLikeCount(Number(likeCounts) || 0), [likeCounts]);
 
   useEffect(() => {
-    socket.on("connect", () => {
-      console.log("Socket Connected", socket.id);
-    });
-
-    socket.on("likeUpdated", (data) => {
+    const handleLikeUpdated = (data) => {
+      if (data?.postId !== postId) return;
+      setCurrentLikeCount(Number(data.likeCount) || 0);
       setAllPosts((prev) =>
         prev.map((p) =>
           p._id === data.postId ? { ...p, likeCount: data.likeCount } : p,
         ),
       );
-    });
+    };
+    socket.on("likeUpdated", handleLikeUpdated);
 
     return () => {
-      socket.off("likeUpdated");
+      socket.off("likeUpdated", handleLikeUpdated);
     };
-  }, []);
+  }, [postId, setAllPosts]);
 
   const handlePostLikes = async (data) => {
     try {
@@ -39,6 +42,8 @@ const User_like_Btn = ({ likeCounts, postId, postLiked }) => {
 
       const resdata = response?.data;
       const colordata = resdata?.isLiked;
+      setIsLiked(Boolean(colordata));
+      setCurrentLikeCount(Number(resdata?.likeCount) || 0);
 
       setAllPosts((prev) =>
         prev.map((p) => (p._id === data ? { ...p, isLiked: colordata } : p)),
@@ -51,12 +56,12 @@ const User_like_Btn = ({ likeCounts, postId, postLiked }) => {
   return (
     <button
       type="button"
-      aria-label={postLiked ? "Unlike post" : "Like post"}
+      aria-label={isLiked ? "Unlike post" : "Like post"}
       onClick={() => handlePostLikes(postId)}
       className="flex min-w-20 flex-col items-center gap-1.5 rounded-lg py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-200 cursor-pointer"
     >
-      <FaHeart className={`text-lg ${postLiked ? "text-rose-500" : "text-slate-500"}`} aria-hidden="true" />
-      <span className="text-xs text-slate-500">{likeCounts ?? 0} Likes</span>
+      <FaHeart className={`text-lg ${isLiked ? "text-rose-500" : "text-slate-500"}`} aria-hidden="true" />
+      <span className="text-xs text-slate-500">{currentLikeCount} Likes</span>
     </button>
   );
 };

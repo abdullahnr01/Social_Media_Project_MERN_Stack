@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { MoreHorizontal, Pencil, Trash2, X } from "lucide-react";
 import { UserContext } from "../../../Context/context";
 import { delete_post_data } from "../../../API layer/api";
+import User_Save_Btn from "./user_save_btn";
 
-const User_menu_button = ({ post }) => {
+const User_menu_button = ({ post, onSavedChange }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -60,11 +61,9 @@ const User_menu_button = ({ post }) => {
     }
   };
 
-  if (!ownsPost) return null;
-
   return (
     <>
-      <div ref={menuRef} className="absolute right-4 top-4 z-20">
+      <div ref={menuRef} className="relative z-30 shrink-0">
         <button
           type="button"
           onClick={() => setMenuOpen((open) => !open)}
@@ -86,41 +85,46 @@ const User_menu_button = ({ post }) => {
             aria-label="Post options"
             className="absolute right-0 top-12 w-60 origin-top-right overflow-hidden rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_45px_rgba(15,23,42,0.18)] ring-1 ring-black/5"
           >
-            <div className="px-3 pb-2 pt-2">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">Post options</p>
-            </div>
-            <button
-              type="button"
-              role="menuitem"
-              onClick={handlePostEdit}
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-amber-50 focus-visible:bg-amber-50 focus-visible:outline-none"
-            >
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
-                <Pencil size={17} aria-hidden="true" />
-              </span>
-              <span>
-                <span className="block text-sm font-semibold text-slate-800">Edit post</span>
-                <span className="mt-0.5 block text-xs text-slate-500">Update your post details</span>
-              </span>
-            </button>
-            <div className="mx-3 my-1 h-px bg-slate-100" />
-            <button
-              type="button"
-              role="menuitem"
-              onClick={() => {
+            {ownsPost && (
+              <>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={handlePostEdit}
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-amber-50 focus-visible:bg-amber-50 focus-visible:outline-none"
+                >
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+                    <Pencil size={17} aria-hidden="true" />
+                  </span>
+                  <span className="text-sm font-semibold text-slate-800">Edit post</span>
+                </button>
+                <div className="mx-3 my-1 h-px bg-slate-100" />
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    setDeleteDialogOpen(true);
+                  }}
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-red-50 focus-visible:bg-red-50 focus-visible:outline-none"
+                >
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-100 text-red-600">
+                    <Trash2 size={17} aria-hidden="true" />
+                  </span>
+                  <span className="text-sm font-semibold text-red-700">Delete post</span>
+                </button>
+                <div className="mx-3 my-1 h-px bg-slate-100" />
+              </>
+            )}
+            <User_Save_Btn
+              postId={post._id}
+              isSaved={post.isSaved}
+              variant="menu"
+              onSavedChange={(saved) => {
                 setMenuOpen(false);
-                setDeleteDialogOpen(true);
+                onSavedChange?.(saved);
               }}
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-red-50 focus-visible:bg-red-50 focus-visible:outline-none"
-            >
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-100 text-red-600">
-                <Trash2 size={17} aria-hidden="true" />
-              </span>
-              <span>
-                <span className="block text-sm font-semibold text-red-700">Delete post</span>
-                <span className="mt-0.5 block text-xs text-slate-500">Permanently remove this post</span>
-              </span>
-            </button>
+            />
           </div>
         )}
       </div>

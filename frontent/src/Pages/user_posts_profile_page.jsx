@@ -251,7 +251,7 @@ const User_Profile_Posts = () => {
                     </button>
                   ) : (
                     <>
-                      <Follow_button target_userId={TargetUserId} variant="profile" />
+                      <Follow_button target_userId={TargetUserId} variant="profile" initialStatus={userPostsProfile.followStatus} />
                       <button
                         type="button"
                         onClick={handleOpenChat}

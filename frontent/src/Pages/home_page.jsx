@@ -19,12 +19,9 @@ import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "timeago.js";
 import {
-  Bell,
-  House,
   ImagePlus,
   MessageCircle,
   MessagesSquare,
-  Settings,
   UserRound,
 } from "lucide-react";
 
@@ -33,6 +30,8 @@ import io from "socket.io-client";
 const socket = io("http://localhost:9090");
 
 import PostCards from "../Components/Home/PostCards/PostCards_parent";
+import FeedSidebar from "../Components/Home/feed_sidebar";
+import SuggestedUsersPanel from "../Components/Home/suggested_users_panel";
 
 const ProfileAvatar = ({ image, name, size = "h-10 w-10" }) => (
   <span className={`flex ${size} shrink-0 items-center justify-center overflow-hidden rounded-full bg-amber-50 text-amber-600 ring-1 ring-slate-200`}>
@@ -46,7 +45,7 @@ const ProfileAvatar = ({ image, name, size = "h-10 w-10" }) => (
 
 //
 function Home() {
-  const { AllPosts, setAllPosts, UserInfo, unreadMessagesCount } = useContext(UserContext);
+  const { AllPosts, setAllPosts, UserInfo } = useContext(UserContext);
 
   // Loader State
 
@@ -65,14 +64,6 @@ function Home() {
 
   const navigate = useNavigate();
   const fullName = `${UserInfo?.firstname || ""} ${UserInfo?.lastname || ""}`.trim() || "Your profile";
-  const profilePath = UserInfo?._id ? `/user_profile_posts?id=${UserInfo._id}` : "/home";
-  const navigationItems = [
-    { label: "Home", icon: House, path: "/home", active: true },
-    { label: "Messages", icon: MessagesSquare, path: "/messaging", badge: unreadMessagesCount },
-    { label: "Notifications", icon: Bell, path: "/notifications" },
-    { label: "Settings", icon: Settings, path: "/settings" },
-  ];
-
   useEffect(() => {
     fetchHomeData();
   }, []);
@@ -237,29 +228,7 @@ function Home() {
     <div className="min-h-[calc(100vh-4rem)] bg-slate-50">
       <div className="mx-auto max-w-[1440px] px-4 py-6 sm:px-6 lg:px-8">
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_250px] xl:grid-cols-[220px_minmax(0,660px)_280px] xl:gap-7">
-          <aside className="hidden space-y-4 xl:sticky xl:top-24 xl:block">
-            <section className="rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm">
-              <div className="flex justify-center">
-                <ProfileAvatar image={UserInfo?.image} name={fullName} size="h-16 w-16" />
-              </div>
-              <h2 className="mt-3 truncate text-base font-bold text-slate-900">{fullName}</h2>
-              <button type="button" onClick={() => navigate(profilePath)} className="mt-1 text-sm font-medium text-slate-500 transition hover:text-amber-700 focus-visible:outline-none focus-visible:underline">
-                View your profile
-              </button>
-              <button type="button" onClick={() => navigate("/create-post")} className="mt-4 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-[#fbba00] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#e0a600] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-200">
-                <ImagePlus size={17} aria-hidden="true" /> Create a post
-              </button>
-            </section>
-            <nav aria-label="Main navigation" className="rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
-              {navigationItems.map(({ label, icon: Icon, path, badge, active }) => (
-                <button key={label} type="button" onClick={() => navigate(path)} aria-current={active ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 ${active ? "bg-amber-50 text-amber-800" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"}`}>
-                  <Icon size={18} aria-hidden="true" />
-                  <span className="flex-1">{label}</span>
-                  {badge > 0 && <span className="min-w-5 rounded-full bg-red-600 px-1.5 py-0.5 text-center text-[10px] font-bold leading-4 text-white">{badge > 99 ? "99+" : badge}</span>}
-                </button>
-              ))}
-            </nav>
-          </aside>
+          <FeedSidebar />
 
           <main className="mx-auto w-full min-w-0 max-w-2xl lg:max-w-none">
             <div className="space-y-5">
@@ -275,7 +244,7 @@ function Home() {
           ) : AllPosts.map((post, index) => (
             <div
               key={post._id || index}
-              className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-shadow duration-200 hover:shadow-md"
+              className="overflow-visible rounded-2xl border border-slate-200 bg-white shadow-sm transition-shadow duration-200 hover:shadow-md"
             >
               <PostCards
                 post={post}
@@ -508,7 +477,7 @@ function Home() {
           ))}
             </div>
           </main>
-
+          <SuggestedUsersPanel />
         </div>
       </div>
     </div>
