@@ -9,6 +9,7 @@ const userSignUpSchema = new Schema(
       type: String,
     },
     isPrivate: { type: Boolean, default: false },
+    savedPosts: [{ type: Schema.Types.ObjectId, ref: "UserPost" }],
     date_of_birth: { type: Date, required: false },
     gender: {
       type: String,

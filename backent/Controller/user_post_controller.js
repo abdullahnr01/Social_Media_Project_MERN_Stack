@@ -54,6 +54,7 @@ module.exports.GetMyPostController = async (req, res) => {
 module.exports.UsersAllPosts = async (req, res) => {
   try {
     const User_Id = new mongoose.Types.ObjectId(req.UserId); // Logged-in user id
+    const savedPostIds = (await UserInfo.findById(User_Id).select("savedPosts").lean())?.savedPosts || [];
 
     const AllPosts = await User.aggregate([
       { $sort: { createdAt: -1 } },
@@ -126,6 +127,7 @@ module.exports.UsersAllPosts = async (req, res) => {
         $addFields: {
           likeCount: { $size: "$likes" },
           isLiked: { $in: [User_Id, "$likes"] },
+          isSaved: { $in: ["$_id", savedPostIds] },
         },
       },
       {
@@ -144,51 +146,54 @@ module.exports.UsersAllPosts = async (req, res) => {
       {
         $addFields: {
           followStatus: {
-            $cond: [
-              { $gt: [{ $size: "$followStatus" }, 0] },
-              {
-                $let: {
-                  vars: {
-                    fs: { $arrayElemAt: ["$followStatus", 0] },
-                  },
-                  in: {
-                    $switch: {
-                      branches: [
-                        {
-                          case: {
-                            $and: [
-                              { $eq: ["$$fs.status", "accepted"] },
-                              { $eq: ["$$fs.loginUser", User_Id] },
-                            ],
-                          },
-                          then: "Following",
+            $let: {
+              vars: {
+                outgoing: {
+                  $arrayElemAt: [
+                    {
+                      $filter: {
+                        input: "$followStatus",
+                        as: "relation",
+                        cond: {
+                          $and: [
+                            { $eq: ["$$relation.loginUser", User_Id] },
+                            { $eq: ["$$relation.targetuser", "$user_id"] },
+                          ],
                         },
-                        {
-                          case: {
-                            $and: [
-                              { $eq: ["$$fs.status", "Pending"] },
-                              { $eq: ["$$fs.loginUser", User_Id] },
-                            ],
-                          },
-                          then: "Pending...",
-                        },
-                        {
-                          case: {
-                            $and: [
-                              { $eq: ["$$fs.status", "Pending"] },
-                              { $ne: ["$$fs.loginUser", User_Id] },
-                            ],
-                          },
-                          then: "Request",
-                        },
-                      ],
-                      default: "Follow",
+                      },
                     },
-                  },
+                    0,
+                  ],
+                },
+                incoming: {
+                  $arrayElemAt: [
+                    {
+                      $filter: {
+                        input: "$followStatus",
+                        as: "relation",
+                        cond: {
+                          $and: [
+                            { $eq: ["$$relation.loginUser", "$user_id"] },
+                            { $eq: ["$$relation.targetuser", User_Id] },
+                          ],
+                        },
+                      },
+                    },
+                    0,
+                  ],
                 },
               },
-              "Follow",
-            ],
+              in: {
+                $switch: {
+                  branches: [
+                    { case: { $eq: ["$$outgoing.status", "accepted"] }, then: "Following" },
+                    { case: { $eq: ["$$outgoing.status", "Pending"] }, then: "Pending..." },
+                    { case: { $eq: ["$$incoming.status", "Pending"] }, then: "Request" },
+                  ],
+                  default: "Follow",
+                },
+              },
+            },
           },
         },
       },
@@ -361,51 +366,54 @@ module.exports.UserProfileWithPosts = async (req, res) => {
       {
         $addFields: {
           followStatus: {
-            $cond: [
-              { $gt: [{ $size: "$followStatus" }, 0] },
-              {
-                $let: {
-                  vars: {
-                    fs: { $arrayElemAt: ["$followStatus", 0] },
-                  },
-                  in: {
-                    $switch: {
-                      branches: [
-                        {
-                          case: {
-                            $and: [
-                              { $eq: ["$$fs.status", "accepted"] },
-                              { $eq: ["$$fs.loginUser", loginUserId] },
-                            ],
-                          },
-                          then: "Following",
+            $let: {
+              vars: {
+                outgoing: {
+                  $arrayElemAt: [
+                    {
+                      $filter: {
+                        input: "$followStatus",
+                        as: "relation",
+                        cond: {
+                          $and: [
+                            { $eq: ["$$relation.loginUser", loginUserId] },
+                            { $eq: ["$$relation.targetuser", "$_id"] },
+                          ],
                         },
-                        {
-                          case: {
-                            $and: [
-                              { $eq: ["$$fs.status", "Pending"] },
-                              { $eq: ["$$fs.loginUser", loginUserId] },
-                            ],
-                          },
-                          then: "Pending...",
-                        },
-                        {
-                          case: {
-                            $and: [
-                              { $eq: ["$$fs.status", "Pending"] },
-                              { $ne: ["$$fs.loginUser", loginUserId] },
-                            ],
-                          },
-                          then: "Request",
-                        },
-                      ],
-                      default: "Follow",
+                      },
                     },
-                  },
+                    0,
+                  ],
+                },
+                incoming: {
+                  $arrayElemAt: [
+                    {
+                      $filter: {
+                        input: "$followStatus",
+                        as: "relation",
+                        cond: {
+                          $and: [
+                            { $eq: ["$$relation.loginUser", "$_id"] },
+                            { $eq: ["$$relation.targetuser", loginUserId] },
+                          ],
+                        },
+                      },
+                    },
+                    0,
+                  ],
                 },
               },
-              "Follow",
-            ],
+              in: {
+                $switch: {
+                  branches: [
+                    { case: { $eq: ["$$outgoing.status", "accepted"] }, then: "Following" },
+                    { case: { $eq: ["$$outgoing.status", "Pending"] }, then: "Pending..." },
+                    { case: { $eq: ["$$incoming.status", "Pending"] }, then: "Request" },
+                  ],
+                  default: "Follow",
+                },
+              },
+            },
           },
         },
       },

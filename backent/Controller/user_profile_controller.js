@@ -177,7 +177,8 @@ module.exports.UserSignUpController = async (req, res) => {
 
 
 
-//
+// Google Auth Controller
+
 module.exports.googleAuthController = async (req, res) => {
   try {
     const { token } = req.body;
@@ -237,55 +238,3 @@ module.exports.googleAuthController = async (req, res) => {
   }
 };
 
-// module.exports.UserProfileUpdateController = async (req, res) => {
-//   try {
-//     if (!req.file) {
-//       return res.status(400).json({ message: "No file uploaded!" });
-//     }
-
-//     const userId = req.UserId;
-//     const user = await UserSignUp.findById(userId);
-
-//     if (!user) {
-//       return res.status(404).json({ message: "User not found!" });
-//     }
-
-//     const result = await cloudinary.uploader.upload(req.file.path, {
-//       folder: "UserProfiles",
-//     });
-
-//     fs.unlinkSync(req.file.path);
-
-//     user.image = result.secure_url;
-//     await user.save();
-
-//     // if (req.file) {
-//     //   user.image = req.file.path;
-//     //   await user.save();
-//     // }
-
-//     return res
-//       .status(200)
-//       .json({ message: "Profile image updated", image: result.secure_url });
-//   } catch (err) {
-//     console.error(`User Upload Profile Error: ${err}`);
-//     return res.status(500).json({ message: "Internal Server error. post" });
-//   }
-// };
-
-// module.exports.getUserPrflImgController = async (req, res) => {
-//   try {
-//     const user = await UserSignUp.findById(req.UserId).select("image");
-
-//     if (!user) {
-//       return res.status(404).json({ success: false, message: "Invalid User" });
-//     }
-
-//     return res.status(200).json({ success: true, image: user.image }); // image path bhi milega
-//   } catch (err) {
-//     console.error(`Get user profile image error`, err);
-//     return res
-//       .status(500)
-//       .json({ success: false, message: "Internal Server error." });
-//   }
-// };

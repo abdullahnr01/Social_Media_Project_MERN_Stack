@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const UserPost_Controller = require("../Controller/user_post_controller");
+const SavedPosts_Controller = require("../Controller/user_saved_posts_controller");
 
 const { auth_middleware } = require("../Middleware/user_middleware");
 
@@ -10,6 +11,9 @@ const PostMulter = require("../Multer/post_multer_middleware");
 // router.get("/getAllMyPosts", auth_middleware, GetMyPostController);
 
 router.get("/getpostdata", auth_middleware, UserPost_Controller.UsersAllPosts);
+router.get("/saved", auth_middleware, SavedPosts_Controller.getSavedPostsController);
+router.put("/:postId/save", auth_middleware, SavedPosts_Controller.savePostController);
+router.delete("/:postId/save", auth_middleware, SavedPosts_Controller.unsavePostController);
 
 router.get(
   "/getsinglepost_data/:id",

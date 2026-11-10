@@ -50,15 +50,3 @@ router.post("/password-reset/reset", PasswordReset_Controller.resetPassword);
 
 module.exports = router;
 
-// router.patch(
-//   "/uploadprofile",
-//   auth_middleware,
-//   ProfileImageMulter.single("image"),
-//   UserProfile_Controller.UserProfileUpdateController,
-// );
-
-// router.get(
-//   "/getuserprofileimage",
-//   auth_middleware,
-//   UserProfile_Controller.getUserPrflImgController,
-// );
