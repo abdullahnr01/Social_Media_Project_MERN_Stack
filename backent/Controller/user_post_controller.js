@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 // User Post Model
-const User = require("../Model/user_post_model");
+const UserPost = require("../Model/user_post_model");
 const UserInfo = require("../Model/user_signup_model");
 const { canViewUserPosts } = require("../Middleware/private_account_access");
 const cloudinary = require("../Cloudinary/CloudinaryConfig");
@@ -12,7 +12,7 @@ const streamifier = require("streamifier");
 module.exports.getSinglePostController = async (req, res) => {
   const { id } = req.params;
   try {
-    const post = await User.findById(id); // MongoDB me post find karna
+    const post = await UserPost.findById(id); // MongoDB me post find karna
     if (!post) {
       return res.status(404).json({ message: "Post Id not found" });
     }
@@ -33,7 +33,7 @@ module.exports.GetMyPostController = async (req, res) => {
   try {
     const User_Id = req.UserId;
 
-    const MyPosts = await User.find({ user_id: User_Id });
+    const MyPosts = await UserPost.find({ user_id: User_Id });
 
     return res.status(200).json({
       success: true,
@@ -56,11 +56,15 @@ module.exports.UsersAllPosts = async (req, res) => {
     const User_Id = new mongoose.Types.ObjectId(req.UserId); // Logged-in user id
     const savedPostIds = (await UserInfo.findById(User_Id).select("savedPosts").lean())?.savedPosts || [];
 
-    const AllPosts = await User.aggregate([
+    const AllPosts = await UserPost.aggregate([
       { $sort: { createdAt: -1 } },
+
+
+      // Jis usersignups(userinfo) document ki _id == post ke field ke user_id ke barabar hai — us owner ki info laa do.
+
       {
         $lookup: {
-          from: "usersignups",
+          from: "usersignups",  // UserInfo Model
           let: { postUserId: "$user_id" },
           pipeline: [
             { $match: { $expr: { $eq: ["$_id", "$$postUserId"] } } },
@@ -73,7 +77,7 @@ module.exports.UsersAllPosts = async (req, res) => {
 
       {
         $lookup: {
-          from: "userfollowers",
+          from: "userfollowers",   //  Userfollow Modal
           let: { postOwnerId: "$user_id" },
           pipeline: [
             {
@@ -240,31 +244,7 @@ module.exports.UserProfileWithPosts = async (req, res) => {
         },
       },
 
-      // 3️⃣ Get Friends (only for count)
-      // {
-      //   $lookup: {
-      //     from: "userfollowers",
-      //     let: { userId: "$_id" },
-      //     pipeline: [
-      //       {
-      //         $match: {
-      //           $expr: {
-      //             $and: [
-      //               { $eq: ["$status", "accepted"] }, // ✅ Only accepted
-      //               {
-      //                 $or: [
-      //                   { $eq: ["$loginUser", "$$userId"] },
-      //                   { $eq: ["$targetuser", "$$userId"] },
-      //                 ],
-      //               },
-      //             ],
-      //           },
-      //         },
-      //       },
-      //     ],
-      //     as: "friends",
-      //   },
-      // },
+     
 
       // Get Following
       {
@@ -480,7 +460,7 @@ module.exports.UserPostController = async (req, res) => {
       uploadedFiles.push(result.secure_url);
     }
 
-    const newPost = await User.create({
+    const newPost = await UserPost.create({
       title,
       description,
       image: uploadedFiles, // array of urls
@@ -501,7 +481,7 @@ module.exports.UserPostController = async (req, res) => {
 module.exports.UserDeletePostController = async (req, res) => {
   try {
     const { userId } = req.query;
-    const delete_user = await User.findByIdAndDelete(userId);
+    const delete_user = await UserPost.findByIdAndDelete(userId);
     if (!delete_user) {
       return res.status(404).json({ error: "Id is invalid" });
     }
@@ -521,7 +501,7 @@ module.exports.UserEditPostController = async (req, res) => {
     const { postId } = req.params;
     const files = req.files;
     //
-    const existingPost = await User.findById(postId);
+    const existingPost = await UserPost.findById(postId);
     if (!existingPost) {
       return res.status(404).json({
         success: false,
@@ -579,52 +559,3 @@ module.exports.UserEditPostController = async (req, res) => {
   }
 };
 
-// const UserGetDataController = async (req, res) => {
-//   try {
-//     const User_Id = req.UserId;
-
-//     const GetData = await User.find()
-//       .populate("user_id", "firstname lastname image")
-
-//       .sort({ createdAt: -1 });
-
-//     const AllPostsWithLikes = GetData.map((post) => ({
-//       ...post.toObject(),
-//       likeCount: post.likes.length || 0,
-//       isLiked: post.likes.includes(User_Id) || false,
-//     }));
-
-//     res.status(200).json(AllPostsWithLikes);
-//   } catch (err) {
-//     console.error(`Get data Error: ${err}`);
-//     return res.status(500).json({ message: "Internal Server error." });
-//   }
-// };
-
-//  Follow Status Add
-// {
-//   $addFields: {
-//     followStatus: {
-//       $let: {
-//         vars: {
-//           status: { $arrayElemAt: ["$followStatus.status", 0] },
-//         },
-//         in: {
-//           $switch: {
-//             branches: [
-//               {
-//                 case: { $eq: ["$$status", "accepted"] },
-//                 then: "Following",
-//               },
-//               {
-//                 case: { $eq: ["$$status", "Pending"] },
-//                 then: "Pending...",
-//               },
-//             ],
-//             default: "Follow",
-//           },
-//         },
-//       },
-//     },
-//   },
-// },
