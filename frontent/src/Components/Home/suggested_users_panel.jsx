@@ -26,16 +26,6 @@ const SuggestedUsersPanel = () => {
     loadUsers();
   }, [loadUsers]);
 
-  const handleSuggestionStatusChange = (userId, status, { action } = {}) => {
-    if (status === "Following" || status === "Pending..." || action === "accepted") {
-      setUsers((previous) => previous.filter((user) => user._id !== userId));
-      return;
-    }
-    if (["rejected", "unfollow", "withdraw"].includes(action)) {
-      loadUsers();
-    }
-  };
-
   return (
     <aside className="sticky top-24 hidden lg:block">
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -120,7 +110,6 @@ const SuggestedUsersPanel = () => {
                     target_userId={user._id}
                     initialStatus={user.followStatus}
                     variant="suggestion"
-                    onStatusChange={(status, details) => handleSuggestionStatusChange(user._id, status, details)}
                   />
                 </article>
               );

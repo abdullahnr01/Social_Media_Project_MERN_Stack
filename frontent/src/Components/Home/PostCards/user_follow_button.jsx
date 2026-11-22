@@ -19,13 +19,12 @@ const Follow_button = ({ target_userId, variant = "default", initialStatus, onSt
   const buttonLabel = followStatus[target_userId] ?? initialStatus ?? "Follow";
   const isProfileVariant = variant === "profile";
   const isSuggestionVariant = variant === "suggestion";
-  const visibleButtonLabel = isSuggestionVariant
-    ? buttonLabel === "Pending..."
-      ? "Requested"
+  const visibleButtonLabel =
+    buttonLabel === "Pending..."
+      ? "Pending"
       : buttonLabel === "Request"
-        ? "Respond"
-        : buttonLabel
-    : buttonLabel;
+        ? "Requested"
+        : buttonLabel;
   const profileButtonStateClass =
     buttonLabel === "Following"
       ? "border border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100"
@@ -121,14 +120,14 @@ const Follow_button = ({ target_userId, variant = "default", initialStatus, onSt
       <button
         type="button"
         disabled={isLoading}
-        aria-label={`${buttonLabel} user`}
+        aria-label={`${visibleButtonLabel} user`}
         onClick={handlePostFollowReq}
         className={
           isProfileVariant
             ? `inline-flex h-11 min-w-[118px] items-center justify-center rounded-xl px-5 text-sm font-semibold shadow-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-100 disabled:cursor-wait disabled:opacity-60 ${profileButtonStateClass}`
             : isSuggestionVariant
               ? `inline-flex h-8 min-w-[74px] items-center justify-center rounded-lg px-2 text-[11px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 disabled:cursor-wait disabled:opacity-60 ${buttonLabel === "Following" || buttonLabel === "Request" || buttonLabel === "Pending..." ? "border border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100" : "border border-transparent bg-[#fbba00] text-white hover:bg-[#e0a600]"}`
-              : `rounded-full px-6 py-2 text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-100 disabled:cursor-wait disabled:opacity-60 ${buttonLabel === "Following" ? "border border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100" : buttonLabel === "Request" || buttonLabel === "Pending..." ? "border border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100" : "border border-transparent bg-[#fbba00] text-white hover:bg-[#e0a600]"}`
+              : `min-w-[112px] rounded-full px-6 py-2 text-sm font-semibold transition-all duration-300 ease-in-out focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-100 disabled:cursor-wait disabled:opacity-60 ${buttonLabel === "Following" ? "border border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100" : buttonLabel === "Request" || buttonLabel === "Pending..." ? "border border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100" : "border border-transparent bg-[#fbba00] text-white hover:bg-[#e0a600]"}`
         }
       >
         {isLoading ? "..." : visibleButtonLabel}

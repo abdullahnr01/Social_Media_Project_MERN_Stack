@@ -64,6 +64,9 @@ function Home() {
 
   const navigate = useNavigate();
   const fullName = `${UserInfo?.firstname || ""} ${UserInfo?.lastname || ""}`.trim() || "Your profile";
+
+
+  
   useEffect(() => {
     fetchHomeData();
   }, []);
